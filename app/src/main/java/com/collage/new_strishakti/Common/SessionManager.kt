@@ -1,0 +1,39 @@
+package com.collage.new_strishakti.Common
+
+import android.content.Context
+import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+class SessionManager(context: Context) {
+
+    private val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+    private val editor = sharedPreferences.edit()
+
+    // Save user data
+    fun saveUserData(userId: Int, userName: String, token: String) {
+        editor.putInt("user_id", userId)
+        editor.putString("user_name", userName)
+        editor.putString("token", token)
+        editor.apply() // or commit()
+    }
+
+    // Get user data
+    fun getUserId(): Int {
+        return sharedPreferences.getInt("user_id", -1)
+    }
+
+    fun getUserName(): String? {
+        return sharedPreferences.getString("user_name", "")
+    }
+
+    fun getToken(): String? {
+        return sharedPreferences.getString("token", "")
+    }
+
+    // Clear all data (logout)
+    fun clear() {
+        editor.clear()
+        editor.apply()
+    }
+}

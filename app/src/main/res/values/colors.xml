@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core Theme Colors -->
+    <color name="colorPrimary">#1E88E5</color>     <!-- Blue -->
+    <color name="colorPrimaryDark">#1565C0</color> <!-- Deep Blue -->
+    <color name="colorAccent">#F06292</color>      <!-- Pink Accent -->
+
+    <!-- Logo Inspired Colors -->
+    <color name="logo_blue">#1E88E5</color>        <!-- Blue -->
+    <color name="logo_red">#E53935</color>         <!-- Red -->
+    <color name="logo_orange">#FB8C00</color>      <!-- Orange -->
+    <color name="logo_pink">#D81B60</color>        <!-- Pink -->
+    <color name="logo_green">#43A047</color>       <!-- Green -->
+
+    <!-- Text Colors -->
+    <color name="textPrimary">#212121</color>
+    <color name="textSecondary">#666666</color>
+    <color name="textHint">#AAAAAA</color>
+
+    <!-- Backgrounds -->
+    <color name="cardBackground">#F5F5F5</color>
+    <color name="dividerColor">#BDBDBD</color>
+    <color name="instagram_red">#ED4956</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#101010</color>
+
+    <color name="socialBlue">#1877F2</color> <!-- Facebook blue -->
+
+    <color name="green_500">#2DB67C</color>
+    <color name="purple_500">#6C63FF</color>
+    <!-- Base Colors -->
+
+    <color name="gray_light">#F5F5F5</color>
+    <color name="text_dark">#212121</color>
+</resources>
+<!--    Buttons / Highlights → use @color/logo_pink or @color/logo_orange-->
+
+<!--    Toolbar / Status bar → use @color/colorPrimary-->
+
+<!--    Icons / Focus states → use @color/logo_green-->
+
+<!--    Text headers → use @color/text_dark-->
+
+<!--    Backgrounds → use @color/gray_light or @color/white-->

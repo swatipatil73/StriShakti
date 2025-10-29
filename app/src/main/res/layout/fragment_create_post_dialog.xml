@@ -1,0 +1,145 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#121212"
+    tools:context=".CreatePostDialogFragment">
+
+    <!-- Post Card -->
+    <LinearLayout
+        android:id="@+id/post_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+
+        android:layout_margin="24dp"
+        android:background="@drawable/bg_post_card"
+        android:elevation="8dp">
+
+        <!-- Header -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Make a Post"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_gravity="center_horizontal"
+            android:paddingBottom="12dp" />
+
+        <!-- Post Text (Caption) -->
+        <EditText
+            android:id="@+id/etPostText"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:gravity="top|start"
+            android:hint="WHAT'S ON YOUR MIND?"
+            android:background="@drawable/bg_edittext_dark"
+            android:padding="12dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#888888"
+            android:textSize="14sp"
+            android:inputType="textMultiLine"
+            android:lines="4" />
+
+        <!-- Hashtags -->
+        <EditText
+            android:id="@+id/etHashtags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Hashtags (comma-separated)"
+            android:background="@drawable/bg_edittext_dark"
+            android:padding="12dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#AAAAAA"
+            android:layout_marginTop="8dp" />
+
+        <!-- Mentions (Optional, keep it gone if you want) -->
+        <EditText
+            android:id="@+id/etMentions"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Mention IDs (comma-separated numbers)"
+            android:background="@drawable/bg_edittext_dark"
+            android:padding="12dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#AAAAAA"
+            android:layout_marginTop="8dp" />
+
+        <!-- Image and Video Pick Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:weightSum="2">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnAddImage"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pick Images"
+                android:background="@drawable/bg_button_dark"
+                android:textColor="#FFFFFF"
+                android:layout_marginEnd="4dp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnAddVideo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pick Video"
+                android:background="@drawable/bg_button_dark"
+                android:textColor="#FFFFFF"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <!-- Clear Media Button -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnClearMedia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear Media"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_button_dark"
+            android:textColor="#FFFFFF" />
+
+        <!-- Selected Media Info -->
+        <TextView
+            android:id="@+id/tvSelected"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No media selected"
+            android:textColor="#CCCCCC"
+            android:layout_marginTop="8dp"
+            android:textSize="12sp" />
+
+        <!-- Post Button -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSubmitPost"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SHARE"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_button_orange"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <!-- ProgressBar -->
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:visibility="gone"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

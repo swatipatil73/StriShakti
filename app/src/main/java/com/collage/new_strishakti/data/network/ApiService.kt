@@ -1,0 +1,140 @@
+package com.collage.new_strishakti.data.network
+
+
+
+import com.collage.new_strishakti.data.model.post.AdsResponse
+import com.collage.new_strishakti.data.model.post.AnnouncementResponse
+import com.collage.new_strishakti.data.model.post.CreatePostResponse
+import com.collage.new_strishakti.data.model.post.HomeResponse
+import com.collage.new_strishakti.data.model.post.ReelsResponse
+import com.collage.new_strishakti.data.model.regi.College
+import com.collage.new_strishakti.data.model.regi.Department
+import com.collage.new_strishakti.data.model.regi.District
+import com.collage.new_strishakti.data.model.regi.LoginRequest
+import com.collage.new_strishakti.data.model.regi.LoginResponse
+import com.collage.new_strishakti.data.model.regi.RegisterRequest
+import com.collage.new_strishakti.data.model.regi.School
+import com.collage.new_strishakti.data.model.regi.State
+import com.collage.new_strishakti.data.model.regi.StreamItem
+import com.collage.new_strishakti.data.model.regi.StudyCentre
+import com.collage.new_strishakti.data.model.regi.Taluka
+import com.collage.new_strishakti.data.model.regi.UniversityResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.ResponseBody
+import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.Headers
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.Call
+import retrofit2.http.Header
+import retrofit2.http.Multipart
+import retrofit2.http.Part
+import retrofit2.http.Query
+
+interface ApiService {
+
+
+    @POST("ssakti/users/user/userRegister")
+    suspend fun registerUser(@Body request: RegisterRequest): Response<ResponseBody>
+
+    @GET("public/api/state/getAllStates")
+    suspend fun getAllStates(): Response<List<State>>
+
+    @GET("public/api/district/getDistrictsByStateId/{stateId}")
+    suspend fun getDistricts(@Path("stateId") stateId: Int): Response<List<District>>
+
+    @GET("public/api/taluka/talukaByDitrictId/{districtId}")
+    suspend fun getTalukas(@Path("districtId") districtId: Int): Response<List<Taluka>>
+
+
+    @GET("api/university/list")
+    suspend fun getUniversities(): Response<UniversityResponse>
+
+
+
+
+    @GET("api/college/university/id/{universityId}")
+    suspend fun getCollegesByUniversity(@Path("universityId") universityId: Int): Response<List<College>>
+
+    @GET("api/schools/university/{universityId}")
+    suspend fun getSchoolsByUniversity(@Path("universityId") universityId: Int): Response<List<School>>
+
+    @GET("api/study-centre/university/id/{universityId}")
+    suspend fun getStudyCentresByUniversity(@Path("universityId") universityId: Int): Response<List<StudyCentre>>
+
+    @GET("api/departments/getAll")
+    suspend fun getAllDepartments(): Response<List<Department>>
+
+    @GET("api/stream-updated/getAll")
+    suspend fun getAllStreams(): Response<List<StreamItem>>
+
+
+    @Headers("Content-Type: application/json")
+    @POST("ssakti/users/user/userLogin")
+    fun loginUser(@Body request: LoginRequest): Call<LoginResponse>
+
+    //post
+
+    // 1) Announcement
+    // Example: /ssakti/users/user/getAnnouncement/SUP_ADMIN_ANNOUNCEMENT?postCategory=...
+    @GET("ssakti/users/user/getAnnouncement/{postCategory}")
+    suspend fun getAnnouncement(
+        @Path("postCategory") postCategory: String,
+        @Header("Authorization") token: String
+    ): Response<AnnouncementResponse>
+
+
+
+    // 2) Ads - SUP_ADMIN
+    @GET("sskati/users/posts/getAds/SUP_ADMIN")
+    suspend fun getAdsSuperAdmin(
+        @Query("postCategory") postCategory: String?,
+        @Header("Authorization") token: String
+    ): Response<AdsResponse>
+
+    // 3) Ads - ADMIN
+    @GET("sskati/users/posts/getAds/ADMIN")
+    suspend fun getAdsAdmin(
+        @Query("postCategory") postCategory: String?,
+        @Header("Authorization") token: String
+    ): Response<AdsResponse>
+
+    // 4) Home posts (paginated)
+    // Example: /ssakti/users/home/home/v1/{userId}?cursor=0&size=5
+    @GET("ssakti/users/home/home/v1/{userId}")
+    suspend fun getHomePosts(
+        @Path("userId") userId: Long,
+        @Query("cursor") cursor: Long,
+        @Query("size") size: Int,
+        @Header("Authorization") token: String
+    ): Response<HomeResponse>
+
+    // 5) Reels (paginated)
+    // /ssakti/users/reels/getAllReels?page=0&size=10
+    @GET("ssakti/users/reels/getAllReels")
+    suspend fun getAllReels(
+        @Query("page") page: Int,
+        @Query("size") size: Int,
+        @Header("Authorization") token: String
+    ): Response<ReelsResponse>
+
+
+    @Multipart
+    @POST("sskati/users/posts/addPost/{userId}")
+    suspend fun addPost(
+        @Path("userId") userId: Int,
+        @Header("Authorization") token: String, // pass token dynamically
+        @Part("postName") postName: RequestBody,
+        @Part("postType") postType: RequestBody,
+        @Part("videoThumbnailUrl") videoThumbnailUrl: RequestBody,
+        @Part postImage: List<MultipartBody.Part>?
+    ): Response<CreatePostResponse>
+
+
+}
+
+
+

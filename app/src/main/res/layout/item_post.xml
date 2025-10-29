@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_margin="6dp"
+    android:elevation="4dp"
+    android:radius="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <!-- Header: Profile image and username -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/imgProfile"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/user"
+                android:layout_marginEnd="16dp" />
+
+            <TextView
+                android:id="@+id/tvUsername"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="username"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="#000" />
+
+            <ImageView
+                android:id="@+id/imgMore"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@drawable/baseline_more_vert_24"
+                android:contentDescription="More options" />
+        </LinearLayout>
+
+        <!-- Caption -->
+        <TextView
+            android:id="@+id/tvCaption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Post caption here..."
+            android:textColor="#222"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="6dp" />
+
+        <!-- Post Image -->
+        <FrameLayout
+            android:id="@+id/mediaContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/imgPost"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:background="#ccc" />
+
+
+            <androidx.media3.ui.PlayerView
+                android:id="@+id/videoPost"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                app:use_controller="true"
+                app:controller_layout_id="@layout/custom_exo_controller"
+                app:resize_mode="zoom"
+                app:surface_type="texture_view"
+                app:show_buffering="never"
+                android:elevation="2dp"
+                android:clipToOutline="true"
+                android:visibility="gone" />
+
+
+
+        </FrameLayout>
+
+
+        <!-- Action Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp">
+
+            <!-- Icons Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:id="@+id/imgLike"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="12dp"
+                    android:src="@drawable/baseline_favorite_24" />
+
+                <TextView
+                    android:id="@+id/tvLikeCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="#000"
+                    android:textSize="14sp"
+                    android:layout_marginEnd="12dp"/>
+
+                <ImageView
+                    android:id="@+id/imgComment"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="12dp"
+                    android:src="@drawable/baseline_comment_24" />
+
+                <ImageView
+                    android:id="@+id/imgShare"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/baseline_send_24" />
+            </LinearLayout>
+
+            <!-- Liked By Text -->
+            <TextView
+                android:id="@+id/tvLikedBy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Liked by someone and others"
+                android:textColor="#000"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Latest Comment Preview -->
+            <LinearLayout
+                android:id="@+id/layoutSingleComment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp"
+                android:visibility="gone">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/imgCommentUser"
+                    android:layout_width="32dp"
+
+                    android:layout_height="32dp"
+                    android:src="@drawable/user" />
+
+                <TextView
+                    android:id="@+id/tvCommentText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Comment preview here..." />
+            </LinearLayout>
+
+            <!-- View all comments text (optional feature) -->
+            <TextView
+                android:id="@+id/tvViewAllComments"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View all comments"
+                android:textColor="@color/textSecondary"
+                android:visibility="gone"
+                android:paddingStart="8dp"
+                android:paddingBottom="8dp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
