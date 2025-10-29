@@ -11,6 +11,8 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.common.Player
@@ -20,13 +22,21 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.collage.new_strishakti.Common.SessionManager
 import com.collage.new_strishakti.R
 import com.collage.new_strishakti.data.model.post.*
+import com.collage.new_strishakti.data.repository.LikeRepository
 import de.hdodenhof.circleimageview.CircleImageView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+
 
 class HomeFeedAdapter(
-    private val sharedReelPlayer: ExoPlayer
+    private val sharedReelPlayer: ExoPlayer,
+    private val coroutineScope: CoroutineScope
 ) : ListAdapter<HomeFeedItem, RecyclerView.ViewHolder>(DIFF_CALLBACK) {
+
 
     companion object {
         private const val TYPE_POST = 0
@@ -55,7 +65,12 @@ class HomeFeedAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
-            TYPE_POST -> PostViewHolder(inflater.inflate(R.layout.item_post, parent, false))
+            TYPE_POST -> PostViewHolder(
+                inflater.inflate(R.layout.item_post, parent, false),
+                sharedReelPlayer,
+                coroutineScope
+            )
+
             TYPE_REEL -> ReelsViewHolder(
                 inflater.inflate(
                     R.layout.item_reels_section,
@@ -93,15 +108,16 @@ class HomeFeedAdapter(
     // ---------------- POST VIEW HOLDER ----------------
     class PostViewHolder(
         itemView: View,
-        private val sharedPlayer: ExoPlayer? = null
+        private val sharedPlayer: ExoPlayer?,
+        private val coroutineScope: CoroutineScope
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val imgProfile: CircleImageView = itemView.findViewById(R.id.imgProfile)
         private val tvUsername: TextView = itemView.findViewById(R.id.tvUsername)
         private val tvCaption: TextView = itemView.findViewById(R.id.tvCaption)
-        private val imgLike: ImageView = itemView.findViewById(R.id.imgLike)
-        private val tvLikeCount: TextView = itemView.findViewById(R.id.tvLikeCount)
-        private val tvLikedBy: TextView = itemView.findViewById(R.id.tvLikedBy)
+        private var imgLike: ImageView = itemView.findViewById(R.id.imgLike)
+        private var tvLikeCount: TextView = itemView.findViewById(R.id.tvLikeCount)
+        private var tvLikedBy: TextView = itemView.findViewById(R.id.tvLikedBy)
         private val layoutSingleComment: LinearLayout =
             itemView.findViewById(R.id.layoutSingleComment)
         private val imgCommentUser: CircleImageView = itemView.findViewById(R.id.imgCommentUser)
@@ -125,16 +141,70 @@ class HomeFeedAdapter(
             tvCaption.text = post.postName ?: ""
 
             // --- Likes ---
-            tvLikeCount.text = post.totalCountOFReact.toString()
-            tvLikedBy.text =
-                if (post.userReactStatus) "Liked by you and others" else "Liked by others"
+            val sessionManager = SessionManager(itemView.context)
+            val currentUserName = sessionManager.getUserName() ?: "You" // get login username
 
+            tvLikeCount.text = post.totalCountOFReact.toString()
+
+// Initial heart color
             imgLike.setImageResource(
-                if (post.isLikedByUser == 1)
-                    R.drawable.baseline_favorite_24_red
-                else
-                    R.drawable.baseline_favorite_24
+                if (post.userReactStatus) R.drawable.baseline_favorite_24_red
+                else R.drawable.baseline_favorite_24
             )
+
+// Initial "Liked by" text
+            tvLikedBy.text = when {
+                post.totalCountOFReact == 0 -> "Be the first to like this"
+                post.userReactStatus && post.totalCountOFReact == 1 -> "Liked by $currentUserName"
+                post.userReactStatus -> "Liked by $currentUserName and ${post.totalCountOFReact - 1} others"
+                else -> "Liked by ${post.totalCountOFReact} others"
+            }
+
+// Sync isLikedByUser with userReactStatus
+
+            imgLike.setOnClickListener {
+                coroutineScope.launch {
+                    try {
+                        val token = sessionManager.getToken() ?: ""
+                        val userId = sessionManager.getUserId()
+
+                        if (post.isLikedByUser == 1) {
+                            // Unlike
+                            val response = LikeRepository.unlikePost(userId.toString(), post.postId.toString(), token)
+                            if (response.isSuccessful && response.body()?.status == "Success") {
+                                post.isLikedByUser = 0
+                                post.totalCountOFReact -= 1
+                            }
+                        } else {
+                            // Like
+                            val response = LikeRepository.likePost(userId.toString(), post.postId.toString(), token)
+                            if (response.isSuccessful && response.body()?.status == "Success") {
+                                post.isLikedByUser = 1
+                                post.totalCountOFReact += 1
+                            }
+                        }
+
+                        // Update UI
+                        tvLikeCount.text = post.totalCountOFReact.toString()
+                        imgLike.setImageResource(
+                            if (post.isLikedByUser == 1) R.drawable.baseline_favorite_24_red
+                            else R.drawable.baseline_favorite_24
+                        )
+
+                        // Update "Liked by" text dynamically
+                        tvLikedBy.text = when {
+                            post.totalCountOFReact == 0 -> "Be the first to like this"
+                            post.isLikedByUser == 1 && post.totalCountOFReact == 1 -> "Liked by $currentUserName"
+                            post.isLikedByUser == 1 -> "Liked by $currentUserName and ${post.totalCountOFReact - 1} others"
+                            else -> "Liked by ${post.totalCountOFReact} others"
+                        }
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+
 
             // --- Comments ---
             val comments = post.commentsAndReacts

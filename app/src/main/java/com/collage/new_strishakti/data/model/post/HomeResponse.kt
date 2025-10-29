@@ -23,14 +23,14 @@ data class PostData(
     val videoThumbnailUrl: String?,
     val postCreatedAt: String?,
     val postName: String?,
-    val totalCountOFReact: Int,
+    var totalCountOFReact: Int,
     val userReactStatus: Boolean,
     val postUploadedAt: String?,
     val userUUID: String?,
     val description: String?,
     val commentsAndReacts: List<CommentData>?,
     val postSaved: Boolean,
-    val isLikedByUser: Int,
+    var isLikedByUser: Int,
     val mediaFiles: List<MediaFile>
 )
 

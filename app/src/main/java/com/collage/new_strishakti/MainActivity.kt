@@ -124,7 +124,7 @@ class MainActivity : BaseActivity() {
     // ------------------------------------------------------------------------------------------
     // 🔹 RecyclerView setup
     private fun setupRecyclerView() {
-        adapter = HomeFeedAdapter(sharedReelPlayer)
+        adapter = HomeFeedAdapter(sharedReelPlayer, lifecycleScope) // <-- pass lifecycleScope
         progressBar = findViewById(R.id.progressBar)
         emptyTextView = findViewById(R.id.emptyTextView)
 

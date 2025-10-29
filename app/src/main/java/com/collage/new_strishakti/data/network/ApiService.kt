@@ -4,6 +4,7 @@ package com.collage.new_strishakti.data.network
 
 import com.collage.new_strishakti.data.model.post.AdsResponse
 import com.collage.new_strishakti.data.model.post.AnnouncementResponse
+import com.collage.new_strishakti.data.model.post.CommonResponse
 import com.collage.new_strishakti.data.model.post.CreatePostResponse
 import com.collage.new_strishakti.data.model.post.HomeResponse
 import com.collage.new_strishakti.data.model.post.ReelsResponse
@@ -29,6 +30,7 @@ import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.Call
+import retrofit2.http.DELETE
 import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.Part
@@ -132,6 +134,26 @@ interface ApiService {
         @Part("videoThumbnailUrl") videoThumbnailUrl: RequestBody,
         @Part postImage: List<MultipartBody.Part>?
     ): Response<CreatePostResponse>
+
+
+    //like
+
+    // ✅ LIKE POST
+    @POST("ssakti/users/postreact/addReactOnPost/{userId}/{postId}")
+    suspend fun addReactOnPost(
+        @Path("userId") userId: String,
+        @Path("postId") postId: String,
+        @Body body: RequestBody,
+        @Header("Authorization") token: String
+    ): Response<CommonResponse>
+
+    // ✅ UNLIKE POST
+    @DELETE("ssakti/users/postreact/deleteReactOnPost/{userId}/{postId}")
+    suspend fun deleteReactOnPost(
+        @Path("userId") userId: String,
+        @Path("postId") postId: String,
+        @Header("Authorization") token: String
+    ): Response<CommonResponse>
 
 
 }
