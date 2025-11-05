@@ -5,69 +5,100 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.collage.new_strishakti.data.model.post.Announcement
 import com.collage.new_strishakti.data.model.post.HomeFeedItem
 import com.collage.new_strishakti.data.repository.HomeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-class HomeViewModel(private val repository: HomeRepository) : ViewModel() {
 
-    val homeFeedItems = MutableLiveData<List<HomeFeedItem>>()
-    val isLoading = MutableLiveData<Boolean>()
-    val error = MutableLiveData<String>()
-    val hasNextPage = MutableLiveData<Boolean>()
-    val nextCursor = MutableLiveData<Long?>()
+class HomeViewModel(
+    private val repository: HomeRepository
+) : ViewModel() {
 
+    // region 🔹 LiveData States
+    private val _homeFeedItems = MutableLiveData<List<HomeFeedItem>>(emptyList())
+    val homeFeedItems: LiveData<List<HomeFeedItem>> = _homeFeedItems
+
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
+
+    private val _error = MutableLiveData<String>()
+    val error: LiveData<String> = _error
+
+    private val _hasNextPage = MutableLiveData<Boolean>()
+    val hasNextPage: LiveData<Boolean> = _hasNextPage
+
+    private val _nextCursor = MutableLiveData<Long?>()
+    val nextCursor: LiveData<Long?> = _nextCursor
+    // endregion
+
+
+    // region 🔹 Delete post
+    /** Removes a post from the current feed (called after delete succeeds). */
+    fun removePost(postId: Int) {
+        val updated = _homeFeedItems.value
+            ?.filterNot { it is HomeFeedItem.PostItem && it.post.postId == postId }
+            ?: emptyList()
+        _homeFeedItems.value = updated
+    }
+    // endregion
+
+
+    // region 🔹 Initial load
     fun loadHomeFeed(userId: Long, token: String) {
-        isLoading.postValue(true)
+        _isLoading.postValue(true)
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Step 1️⃣ - Load only posts first
+                // Step 1️⃣ - Load posts first
                 val postResult = repository.loadMorePosts(userId, token, 0)
                 val postsPage = postResult.getOrNull()
 
-                if (postsPage != null) {
-                    val items = postsPage.items.toMutableList()
-                    homeFeedItems.postValue(items)
-                    nextCursor.postValue(postsPage.nextCursor)
-                    hasNextPage.postValue(postsPage.hasNextPage)
+                postsPage?.let {
+                    _homeFeedItems.postValue(it.items)
+                    _nextCursor.postValue(it.nextCursor)
+                    _hasNextPage.postValue(it.hasNextPage)
                 }
 
-                // Step 2️⃣ - Now load remaining data (ads, reels, announcement)
+                // Step 2️⃣ - Load full feed (ads, reels, announcements)
                 val fullResult = repository.loadInitialHomeFeed(userId, token)
                 val fullFeed = fullResult.getOrNull()
 
-                if (fullFeed != null) {
-                    homeFeedItems.postValue(fullFeed.items)
-                    nextCursor.postValue(fullFeed.nextCursor)
-                    hasNextPage.postValue(fullFeed.hasNextPage)
+                fullFeed?.let {
+                    _homeFeedItems.postValue(it.items)
+                    _nextCursor.postValue(it.nextCursor)
+                    _hasNextPage.postValue(it.hasNextPage)
                 }
 
             } catch (e: Exception) {
-                error.postValue("Failed to load home feed: ${e.localizedMessage}")
+                Log.e("HomeViewModel", "Error loading home feed", e)
+                _error.postValue("Failed to load home feed: ${e.localizedMessage}")
             } finally {
-                isLoading.postValue(false)
+                _isLoading.postValue(false)
             }
         }
     }
+    // endregion
 
+
+    // region 🔹 Pagination
     fun loadMorePosts(userId: Long, token: String, cursor: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = repository.loadMorePosts(userId, token, cursor)
                 val morePosts = result.getOrNull()
 
-                if (morePosts != null) {
-                    val current = homeFeedItems.value?.toMutableList() ?: mutableListOf()
-                    current.addAll(morePosts.items)
-                    homeFeedItems.postValue(current)
-                    nextCursor.postValue(morePosts.nextCursor)
-                    hasNextPage.postValue(morePosts.hasNextPage)
+                morePosts?.let {
+                    val current = _homeFeedItems.value?.toMutableList() ?: mutableListOf()
+                    current.addAll(it.items)
+                    _homeFeedItems.postValue(current)
+                    _nextCursor.postValue(it.nextCursor)
+                    _hasNextPage.postValue(it.hasNextPage)
                 }
             } catch (e: Exception) {
-                error.postValue("Failed to load more posts: ${e.localizedMessage}")
+                Log.e("HomeViewModel", "Error loading more posts", e)
+                _error.postValue("Failed to load more posts: ${e.localizedMessage}")
             }
         }
     }
+    // endregion
 }

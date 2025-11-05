@@ -2,6 +2,8 @@ package com.collage.new_strishakti.data.network
 
 
 
+import com.collage.new_strishakti.data.model.Comment.CommentModel
+import com.collage.new_strishakti.data.model.Comment.CommentResponse
 import com.collage.new_strishakti.data.model.post.AdsResponse
 import com.collage.new_strishakti.data.model.post.AnnouncementResponse
 import com.collage.new_strishakti.data.model.post.CommonResponse
@@ -135,7 +137,33 @@ interface ApiService {
         @Part postImage: List<MultipartBody.Part>?
     ): Response<CreatePostResponse>
 
+//deleet
+        @DELETE("sskati/users/posts/deletPost/{postId}")
+        suspend fun deletePost(
+            @Path("postId") postId: Int,
+            @Header("Authorization") bearer: String
+        ): Response<CommentResponse>
 
+        //save  https://dev.api.strishakti.org/ssakti/users/savepost/savePost/352/1446
+        @POST("ssakti/users/savepost/savePost/{userId}/{postId}")
+        suspend fun savePost(
+            @Path("userId") userId: Int,
+            @Path("postId") postId: Int,
+            @Header("Authorization") token: String
+        ): Response<CommonResponse>
+
+
+        //repeot   ssakti/users/dispute/raiseDispute
+
+
+    @POST("ssakti/users/dispute/raiseDispute/{userId}/{postId}/{disputeTitleId}")
+    suspend fun reportPost(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int,
+        @Path("postId") postId: Int,
+        @Path("disputeTitleId") disputeTitleId: Int,
+        @Body body: Map<String, String>
+    ): Response<CommonResponse>
     //like
 
     // ✅ LIKE POST
@@ -154,6 +182,45 @@ interface ApiService {
         @Path("postId") postId: String,
         @Header("Authorization") token: String
     ): Response<CommonResponse>
+
+
+
+    @GET("ssakti/users/postcomment/getCommentsAndReacts/{postId}")
+    suspend fun getComments(
+        @Header("Authorization") token: String,
+        @Path("postId") postId: Int
+    ): Response<CommentResponse>
+
+    @POST("ssakti/users/postcomment/addCommentOnPost/{userId}/{postId}")
+
+    suspend fun addComment(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int,
+        @Path("postId") postId: Int,
+        @Body body: Map<String, String>
+    ): Response<CommentModel>
+
+    @POST("ssakti/users/postcomment/addCommentOnComment/{userId}/{postId}/{commentId}")
+
+
+    suspend fun addReply(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int,
+        @Path("postId") postId: Int,
+        @Path("commentId") commentId: Int,
+        @Body body: Map<String, String>
+    ): Response<CommonResponse> // or ApiResponse if that’s your model
+
+
+    @DELETE("ssakti/users/postcomment/deleteParentComment/{userId}/{postCommentId}")
+    suspend fun deleteParentComment(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int,
+        @Path("postCommentId") postCommentId: Int
+    ): Response<CommonResponse>
+
+
+
 
 
 }

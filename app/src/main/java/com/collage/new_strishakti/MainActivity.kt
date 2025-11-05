@@ -43,8 +43,14 @@ import kotlinx.coroutines.withContext
 
 import android.os.Handler
 import android.os.Looper
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.collage.new_strishakti.data.model.post.AdsResponse
 import com.collage.new_strishakti.data.model.post.AnnouncementResponse
+import com.collage.new_strishakti.data.model.post.PostActionsVMFactory
+import com.collage.new_strishakti.data.repository.PostActionsRepository
+import com.collage.new_strishakti.ui.RegisterViewModel.PostActionEvent
+import com.collage.new_strishakti.ui.RegisterViewModel.PostActionsViewModel
 import org.json.JSONObject
 import retrofit2.Response
 
@@ -64,7 +70,7 @@ class MainActivity : BaseActivity() {
     private var userId: Long = 0
 
     lateinit var sharedReelPlayer: ExoPlayer
-
+    private lateinit var postActionsVM: PostActionsViewModel   // <— add this
     private var nextCursor: Long? = 0L
     private var hasNextPage = true
     private var isLoading = false
@@ -102,11 +108,17 @@ class MainActivity : BaseActivity() {
             playWhenReady = false
             repeatMode = Player.REPEAT_MODE_ONE
         }
+        postActionsVM = ViewModelProvider(
+            this,
+            PostActionsVMFactory(PostActionsRepository(apiService))
+        ).get(PostActionsViewModel::class.java)
 
         setupRecyclerView()
         setupViewModel()
-        observeViewModel()
 
+        observeViewModel()
+        observePostActions()
+        observeDeleteEvents()
         lifecycleScope.launch {
             userId = sessionManager.getUserId().toLong()
             token = "Bearer ${sessionManager.getToken()}"
@@ -124,7 +136,8 @@ class MainActivity : BaseActivity() {
     // ------------------------------------------------------------------------------------------
     // 🔹 RecyclerView setup
     private fun setupRecyclerView() {
-        adapter = HomeFeedAdapter(sharedReelPlayer, lifecycleScope) // <-- pass lifecycleScope
+        adapter = HomeFeedAdapter(sharedReelPlayer, lifecycleScope,   postActionsVM
+        ) // <-- pass lifecycleScope
         progressBar = findViewById(R.id.progressBar)
         emptyTextView = findViewById(R.id.emptyTextView)
 
@@ -158,20 +171,80 @@ class MainActivity : BaseActivity() {
     }
 
     private fun observeViewModel() {
-        viewModel.homeFeedItems.observe(this) {
-            adapter.submitList(it)
+        viewModel.homeFeedItems.observe(this) { items ->
+            adapter.submitList(items)
             progressBar.visibility = View.GONE
-            emptyTextView.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
+            emptyTextView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
         }
 
-        viewModel.isLoading.observe(this) {
-            progressBar.visibility = if (it) View.VISIBLE else View.GONE
+        viewModel.isLoading.observe(this) { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
-        viewModel.error.observe(this) {
-            Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+        viewModel.error.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
     }
+    private fun observePostActions() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                postActionsVM.events.collect { ev ->
+                    when (ev) {
+                        is PostActionEvent.Saved -> {
+                            Toast.makeText(
+                                this@MainActivity,
+                                ev.message, // Only the message, e.g. "Post saved successfully"
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            // Re-enable the button for this post if needed
+                            adapter.notifyItemChanged(ev.postId)
+                        }
+
+                        is PostActionEvent.Error -> {
+                            Toast.makeText(
+                                this@MainActivity,
+                                ev.message, // Only the message, e.g. "This post has already been saved"
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            // Re-enable the button
+                            adapter.notifyItemChanged(ev.postId)
+                        }
+
+                        is PostActionEvent.Deleted -> { /* handle delete if needed */ }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+    private fun observeDeleteEvents() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                postActionsVM.events.collect { event ->
+                    if (event is PostActionEvent.Deleted) {
+                        // Remove the deleted post from HomeViewModel feed immediately
+                        viewModel.removePost(event.postId)
+
+                        // Optional: show a Toast message
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Post deleted",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+
 
     // ------------------------------------------------------------------------------------------
     // 🔹 Load Posts (Optimized)

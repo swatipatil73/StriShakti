@@ -17,15 +17,15 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/imgProfile"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
-                android:src="@drawable/user"
-                android:layout_marginEnd="16dp" />
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/user" />
 
             <TextView
                 android:id="@+id/tvUsername"
@@ -33,18 +33,19 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="username"
-                android:textStyle="bold"
+                android:textColor="#000"
                 android:textSize="15sp"
-                android:textColor="#000" />
+                android:textStyle="bold" />
 
             <ImageView
                 android:id="@+id/imgMore"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:clickable="true"
+              android:layout_marginStart="50dp"
+                android:contentDescription="More options"
                 android:focusable="true"
-                android:src="@drawable/baseline_more_vert_24"
-                android:contentDescription="More options" />
+                android:src="@drawable/baseline_more_vert_24" />
         </LinearLayout>
 
         <!-- Caption -->
@@ -148,40 +149,7 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="6dp" />
 
-            <!-- Latest Comment Preview -->
-            <LinearLayout
-                android:id="@+id/layoutSingleComment"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="8dp"
-                android:visibility="gone">
 
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/imgCommentUser"
-                    android:layout_width="32dp"
-
-                    android:layout_height="32dp"
-                    android:src="@drawable/user" />
-
-                <TextView
-                    android:id="@+id/tvCommentText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Comment preview here..." />
-            </LinearLayout>
-
-            <!-- View all comments text (optional feature) -->
-            <TextView
-                android:id="@+id/tvViewAllComments"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="View all comments"
-                android:textColor="@color/textSecondary"
-                android:visibility="gone"
-                android:paddingStart="8dp"
-                android:paddingBottom="8dp" />
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

@@ -8,7 +8,6 @@ import android.widget.TextView
 import android.widget.VideoView
 import com.collage.new_strishakti.R
 
-
 object ViewUtils {
 
     fun showEmptyState(parentView: View, visible: Boolean, message: String) {
@@ -22,13 +21,16 @@ object ViewUtils {
 
             val uri = Uri.parse("android.resource://${parentView.context.packageName}/${R.raw.f}")
             emptyVideo.setVideoURI(uri)
-            emptyVideo.setOnPreparedListener { it.isLooping = true }
-            emptyVideo.start()
+            emptyVideo.setOnPreparedListener { mp ->
+                mp.isLooping = true
+                mp.start()
+            }
         } else {
             emptyLayout.visibility = View.GONE
             emptyVideo.stopPlayback()
         }
     }
 }
+
 
 //ViewUtils.showEmptyState(findViewById(R.id.main), true, "Failed to fetch comments.")

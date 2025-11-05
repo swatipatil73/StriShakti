@@ -1,15 +1,19 @@
 package com.collage.new_strishakti.Adapter
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -22,19 +26,24 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.collage.new_strishakti.CommentActivity
 import com.collage.new_strishakti.Common.SessionManager
 import com.collage.new_strishakti.R
 import com.collage.new_strishakti.data.model.post.*
 import com.collage.new_strishakti.data.repository.LikeRepository
+import com.collage.new_strishakti.ui.RegisterViewModel.PostActionEvent
+import com.collage.new_strishakti.ui.RegisterViewModel.PostActionsViewModel
+import com.collage.new_strishakti.ui.RegisterViewModel.ReportBottomSheet
 import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-
+import java.lang.reflect.Field
 
 
 class HomeFeedAdapter(
     private val sharedReelPlayer: ExoPlayer,
-    private val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope,
+    private val vm: PostActionsViewModel
 ) : ListAdapter<HomeFeedItem, RecyclerView.ViewHolder>(DIFF_CALLBACK) {
 
 
@@ -68,7 +77,8 @@ class HomeFeedAdapter(
             TYPE_POST -> PostViewHolder(
                 inflater.inflate(R.layout.item_post, parent, false),
                 sharedReelPlayer,
-                coroutineScope
+                coroutineScope,
+                vm
             )
 
             TYPE_REEL -> ReelsViewHolder(
@@ -109,7 +119,8 @@ class HomeFeedAdapter(
     class PostViewHolder(
         itemView: View,
         private val sharedPlayer: ExoPlayer?,
-        private val coroutineScope: CoroutineScope
+        private val coroutineScope: CoroutineScope,
+        private val vm: PostActionsViewModel
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val imgProfile: CircleImageView = itemView.findViewById(R.id.imgProfile)
@@ -118,11 +129,10 @@ class HomeFeedAdapter(
         private var imgLike: ImageView = itemView.findViewById(R.id.imgLike)
         private var tvLikeCount: TextView = itemView.findViewById(R.id.tvLikeCount)
         private var tvLikedBy: TextView = itemView.findViewById(R.id.tvLikedBy)
-        private val layoutSingleComment: LinearLayout =
-            itemView.findViewById(R.id.layoutSingleComment)
-        private val imgCommentUser: CircleImageView = itemView.findViewById(R.id.imgCommentUser)
-        private val tvCommentText: TextView = itemView.findViewById(R.id.tvCommentText)
-        private val tvViewAllComments: TextView = itemView.findViewById(R.id.tvViewAllComments)
+
+        private var imgMore: ImageView = itemView.findViewById(R.id.imgMore)
+        private val imgComment: ImageView = itemView.findViewById(R.id.imgComment)
+
         private val imgPost: ImageView = itemView.findViewById(R.id.imgPost)
         private val videoPost: PlayerView = itemView.findViewById(R.id.videoPost)
 
@@ -140,9 +150,91 @@ class HomeFeedAdapter(
             tvUsername.text = post.userName ?: "Unknown User"
             tvCaption.text = post.postName ?: ""
 
+
             // --- Likes ---
             val sessionManager = SessionManager(itemView.context)
             val currentUserName = sessionManager.getUserName() ?: "You" // get login username
+
+            // ---------------- MORE MENU ----------------
+            val currentUserId = SessionManager(itemView.context).getUserId() // or PrefHelper.getuserId(context)
+            imgMore.setOnClickListener { view ->
+                val context = view.context
+                val popupMenu = PopupMenu(context, imgMore, 0, 0, R.style.InstaPopupMenu)
+                val menu = popupMenu.menu
+                popupMenu.menuInflater.inflate(R.menu.popup_menu, menu)
+
+                // Conditionally show/hide menu items
+                if (post.userId == currentUserId) {
+                    menu.findItem(R.id.action_save)?.isVisible = false
+                    menu.findItem(R.id.action_report)?.isVisible = false
+                } else {
+                    menu.findItem(R.id.action_delete)?.isVisible = false
+                }
+
+                // Force show icons using reflection (for older Android versions)
+                try {
+                    val field: Field = popupMenu.javaClass.getDeclaredField("mPopup")
+                    field.isAccessible = true
+                    val mPopup = field.get(popupMenu)
+                    mPopup.javaClass
+                        .getDeclaredMethod("setForceShowIcon", Boolean::class.java)
+                        .invoke(mPopup, true)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+    
+                // Menu item click actions
+                popupMenu.setOnMenuItemClickListener { menuItem: MenuItem ->
+                    when (menuItem.itemId) {
+
+                        R.id.action_delete -> {
+                           // Toast.makeText(context, "Deleting post ${post.postId}", Toast.LENGTH_SHORT).show()
+
+                            val token = "Bearer ${SessionManager(context).getToken() ?: ""}"
+                            vm.delete(post.postId, token)   // ✅ call ViewModel (PostActionsViewModel)
+
+                            true
+                        }
+//                        R.id.action_save -> {
+//                            val context = itemView.context
+//                            val session = SessionManager(context)
+//                            val userId = session.getUserId()
+//                            val token = "Bearer ${session.getToken()}"
+//
+//                            vm.save(userId, post.postId, token) // triggers event
+//                            true
+//                        }
+                        R.id.action_save -> {
+                            val context = itemView.context
+                            val session = SessionManager(context)
+                            val userId = session.getUserId()
+                            val token = "Bearer ${session.getToken()}"
+
+                            // Disable the save button to prevent multiple clicks
+                            itemView.isEnabled = false
+
+                            // Call ViewModel to save post
+                            vm.save(userId, post.postId, token)
+
+                            // Re-enable button will be handled in Activity/Fragment observer
+                            true
+                        }
+
+
+
+
+                        R.id.action_report -> {
+                            Toast.makeText(context, "Report Post ${post.postId}", Toast.LENGTH_SHORT).show()
+                            val userId = SessionManager(context).getUserId()
+                            ReportBottomSheet.show(context, post.postId, userId)
+                        }
+                    }
+                    true
+                }
+
+                popupMenu.show()
+            }
+
 
             tvLikeCount.text = post.totalCountOFReact.toString()
 
@@ -207,17 +299,16 @@ class HomeFeedAdapter(
 
 
             // --- Comments ---
+            // --- Comments ---
             val comments = post.commentsAndReacts
-            if (!comments.isNullOrEmpty()) {
-                layoutSingleComment.visibility = View.VISIBLE
-                val lastComment = comments.last()
-                tvCommentText.text = lastComment.commentText ?: "Nice post!"
-                tvViewAllComments.visibility =
-                    if (comments.size > 1) View.VISIBLE else View.GONE
-                tvViewAllComments.text = "View all ${comments.size} comments"
-            } else {
-                layoutSingleComment.visibility = View.GONE
-                tvViewAllComments.visibility = View.GONE
+
+            imgComment.setOnClickListener {
+                Toast.makeText(itemView.context, "Opening comments...", Toast.LENGTH_SHORT).show()
+
+                val intent = Intent(itemView.context, CommentActivity::class.java)
+                intent.putExtra("postId", post.postId)
+                intent.putExtra("postOwnerUsername", post.userName) // 👈 pass username here// ✅ Pass post ID
+                itemView.context.startActivity(intent)
             }
 
             // --- Media ---
