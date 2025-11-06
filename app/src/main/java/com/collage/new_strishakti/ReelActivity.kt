@@ -10,9 +10,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.collage.new_strishakti.Adapter.ReelAdapter
 import android.content.Intent
+import android.view.View
 
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.collage.new_strishakti.Common.SessionManager
 
 import com.collage.new_strishakti.Factory.ReelViewModelFactory
@@ -33,29 +35,31 @@ class ReelActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private var userToken: String? = null
 
-    // ViewModel is created later, after we have the token
     private val viewModel: ReelViewModel by viewModels {
         ReelViewModelFactory(ReelRepository(ApiClient.apiService, userToken ?: ""))
     }
 
-    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reel)
 
-        // ✅ Initialize SessionManager before using it
         sessionManager = SessionManager(this)
-        userToken = sessionManager.getToken() // Add "Bearer " prefix automatically
+        userToken = sessionManager.getToken()
 
         recyclerView = findViewById(R.id.recyclerReels)
-        recyclerView.layoutManager = GridLayoutManager(this, 3)
 
-        adapter = ReelAdapter { reel ->
-            openFullScreenReel(reel)
+        val sglm = StaggeredGridLayoutManager(
+            3, StaggeredGridLayoutManager.VERTICAL
+        ).apply {
+            gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
         }
+        recyclerView.layoutManager = sglm
+        recyclerView.setHasFixedSize(true)
+        recyclerView.addItemDecoration(GridSpacingDecoration(2)) // 2dp gap
+
+        adapter = ReelAdapter { reel -> openFullScreenReel(reel) }
         recyclerView.adapter = adapter
 
-        // ✅ Load reels from the ViewModel using coroutine
         lifecycleScope.launch {
             viewModel.getReels().collectLatest { pagingData ->
                 adapter.submitData(pagingData)
@@ -64,10 +68,20 @@ class ReelActivity : AppCompatActivity() {
     }
 
     private fun openFullScreenReel(reel: Reel) {
-        val intent = Intent(this, ReelFullScreenActivity::class.java).apply {
+        startActivity(Intent(this, ReelFullScreenActivity::class.java).apply {
             putExtra("reel_id", reel.postId)
             putExtra("reel_url", reel.postImageURl)
+        })
+    }
+
+    class GridSpacingDecoration(private val spaceDp: Int) : RecyclerView.ItemDecoration() {
+        private fun Int.dp(v: View) = (this * v.resources.displayMetrics.density).toInt()
+        override fun getItemOffsets(
+            outRect: android.graphics.Rect, v: View, parent: RecyclerView, state: RecyclerView.State
+        ) {
+            val s = spaceDp.dp(v)
+            outRect.set(s, s, s, s)
         }
-        startActivity(intent)
     }
 }
+

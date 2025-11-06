@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.collage.new_strishakti.Adapter.ReelFullScreenAdapter
@@ -46,6 +47,7 @@ class ReelFullScreenActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerFullScreenReels)
         recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
 
+
         // ✅ Pass empty click handlers for now
         adapter = ReelFullScreenAdapter(
             onLikeClick = { reel -> /* TODO */ },
@@ -62,10 +64,15 @@ class ReelFullScreenActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.getReels().collectLatest { pagingData ->
                 adapter.submitData(pagingData)
-                scrollToInitialReel()
             }
         }
 
+        adapter.addLoadStateListener { loadState ->
+            val isNotLoading = loadState.source.refresh is LoadState.NotLoading
+            if (isNotLoading) {
+                scrollToInitialReel()
+            }
+        }
         // Auto-play visible reel
         setupAutoPlayOnScroll()
     }
@@ -82,16 +89,27 @@ class ReelFullScreenActivity : AppCompatActivity() {
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
+
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                    val visiblePos = layoutManager.findFirstCompletelyVisibleItemPosition()
+                    // Pause all
+                    for (i in 0 until recyclerView.childCount) {
+                        val childHolder = recyclerView.getChildViewHolder(recyclerView.getChildAt(i))
+                        if (childHolder is ReelFullScreenAdapter.FullScreenViewHolder) {
+                            childHolder.pausePlayer()
+                        }
+                    }
+
+                    // Play the first visible item
+                    val visiblePos = layoutManager.findFirstVisibleItemPosition()
                     if (visiblePos != RecyclerView.NO_POSITION) {
                         val holder = recyclerView.findViewHolderForAdapterPosition(visiblePos)
                                 as? ReelFullScreenAdapter.FullScreenViewHolder
                         holder?.playPlayer()
                     }
                 } else {
-                    // Pause all other players when scrolling
+                    // Pause all while scrolling
                     for (i in 0 until recyclerView.childCount) {
                         val childHolder = recyclerView.getChildViewHolder(recyclerView.getChildAt(i))
                         if (childHolder is ReelFullScreenAdapter.FullScreenViewHolder) {
@@ -102,6 +120,7 @@ class ReelFullScreenActivity : AppCompatActivity() {
             }
         })
     }
+
 
     override fun onPause() {
         super.onPause()
