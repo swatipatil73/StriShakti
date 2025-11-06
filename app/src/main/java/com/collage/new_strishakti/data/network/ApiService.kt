@@ -4,6 +4,7 @@ package com.collage.new_strishakti.data.network
 
 import com.collage.new_strishakti.data.model.Comment.CommentModel
 import com.collage.new_strishakti.data.model.Comment.CommentResponse
+import com.collage.new_strishakti.data.model.Reel.ReelResponse
 import com.collage.new_strishakti.data.model.post.AdsResponse
 import com.collage.new_strishakti.data.model.post.AnnouncementResponse
 import com.collage.new_strishakti.data.model.post.CommonResponse
@@ -219,7 +220,12 @@ interface ApiService {
         @Path("postCommentId") postCommentId: Int
     ): Response<CommonResponse>
 
-
+    @GET("ssakti/users/reels/getAllReels")
+    suspend fun getReels(
+        @Header("Authorization") token: String,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): ReelResponse
 
 
 

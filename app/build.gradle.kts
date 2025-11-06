@@ -49,6 +49,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.mediation.test.suite)
     implementation(libs.interactivemedia)
+    implementation(libs.androidx.paging.common)
+    implementation(libs.androidx.leanback.paging)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -83,6 +85,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-ui:1.8.0")
     implementation("androidx.media3:media3-common:1.8.0")
+
 
 
     implementation("androidx.datastore:datastore-preferences:1.1.7")
