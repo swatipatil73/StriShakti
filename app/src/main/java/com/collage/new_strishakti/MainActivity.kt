@@ -450,6 +450,9 @@ class MainActivity : BaseActivity() {
     }
 
     override fun onCreateClicked() {
+
+
+
         val dialog = CreatePostDialogFragment()
         dialog.onPostCreatedListener = object : OnPostCreatedListener {
             override fun onPostCreated() {

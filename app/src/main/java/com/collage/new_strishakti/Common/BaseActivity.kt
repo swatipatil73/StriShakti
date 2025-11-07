@@ -26,7 +26,12 @@ abstract class BaseActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
     }
 
-    fun setupToolbar(title: String, showSearch: Boolean = false, showCreate: Boolean = false) {
+    fun setupToolbar(
+        title: String,
+        showSearch: Boolean = false,
+        showCreate: Boolean = false,
+        createIconRes: Int = R.drawable.baseline_add_circle_outline_24 // default icon
+    ) {
         toolbar = findViewById(R.id.topAppBar)
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
@@ -43,15 +48,10 @@ abstract class BaseActivity : AppCompatActivity() {
         navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.reel -> {
-                    // Open ReelActivity
                     val intent = Intent(this, ReelActivity::class.java)
                     startActivity(intent)
                 }
                 R.id.nav_profile -> Toast.makeText(this, "Profile clicked", Toast.LENGTH_SHORT).show()
-//                R.id.nav_account -> Toast.makeText(this, "Account clicked", Toast.LENGTH_SHORT).show()
-//                R.id.nav_settings -> Toast.makeText(this, "Settings clicked", Toast.LENGTH_SHORT).show()
-//                R.id.nav_help -> Toast.makeText(this, "Help clicked", Toast.LENGTH_SHORT).show()
-//                R.id.nav_logout -> Toast.makeText(this, "Logout clicked", Toast.LENGTH_SHORT).show()
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
@@ -67,24 +67,23 @@ abstract class BaseActivity : AppCompatActivity() {
             searchItem.setIcon(R.drawable.outline_search_24)
             searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
             searchItem.setOnMenuItemClickListener {
-                Toast.makeText(this, "Search clicked", Toast.LENGTH_SHORT).show()
                 onSearchClicked()
                 true
             }
         }
 
-        // ➕ Create icon on right
+        // ➕ or 🎥 Create icon on right
         if (showCreate) {
             val createItem = menu.add("Create")
-            createItem.setIcon(R.drawable.baseline_add_circle_outline_24)
+            createItem.setIcon(createIconRes)
             createItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
             createItem.setOnMenuItemClickListener {
-                Toast.makeText(this, "Create clicked", Toast.LENGTH_SHORT).show()
                 onCreateClicked()
                 true
             }
         }
     }
+
 
     open fun onSearchClicked() {}
     open fun onCreateClicked() {}

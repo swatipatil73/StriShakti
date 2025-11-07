@@ -11,10 +11,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.collage.new_strishakti.Adapter.ReelAdapter
 import android.content.Intent
 import android.view.View
+import android.widget.Toast
 
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import com.collage.new_strishakti.Common.BaseActivity
+import com.collage.new_strishakti.Common.BottomNavigationHelper
 import com.collage.new_strishakti.Common.SessionManager
 
 import com.collage.new_strishakti.Factory.ReelViewModelFactory
@@ -23,18 +26,19 @@ import com.collage.new_strishakti.data.model.Reel.Reel
 import com.collage.new_strishakti.data.network.ApiClient
 import com.collage.new_strishakti.data.repository.ReelRepository
 import com.collage.new_strishakti.ui.RegisterViewModel.ReelViewModel
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 
-class ReelActivity : AppCompatActivity() {
+class ReelActivity :BaseActivity()  {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ReelAdapter
     private lateinit var sessionManager: SessionManager
     private var userToken: String? = null
-
+    private lateinit var bottomNavigationView: BottomNavigationView
     private val viewModel: ReelViewModel by viewModels {
         ReelViewModelFactory(ReelRepository(ApiClient.apiService, userToken ?: ""))
     }
@@ -42,7 +46,17 @@ class ReelActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reel)
+//        setupToolbar(title = "Stri shakti", showSearch = false, showCreate = true)
+        setupToolbar(
+            title = "Stri Shakti",
+            showSearch = false,
+            showCreate = true,
+            createIconRes = R.drawable.baseline_photo_camera_24 // 🎥 camera icon
+        )
 
+
+        bottomNavigationView = findViewById(R.id.bottomNavigationView)
+        BottomNavigationHelper.setupBottomNavigation(this, bottomNavigationView, R.id.nav_home)
         sessionManager = SessionManager(this)
         userToken = sessionManager.getToken()
 
@@ -83,5 +97,23 @@ class ReelActivity : AppCompatActivity() {
             outRect.set(s, s, s, s)
         }
     }
+    override fun onCreateClicked() {
+        val dialog = CreateReelDialogFragment()
+        dialog.onReelCreatedListener = object : OnReelCreatedListener {
+            override fun onReelCreated() {
+                refreshReelFeed()
+            }
+
+            private fun refreshReelFeed() {
+                adapter.refresh()
+            }
+
+        }
+        dialog.show(supportFragmentManager, "CreateReel")
+    }
+
+
+
+
 }
 
