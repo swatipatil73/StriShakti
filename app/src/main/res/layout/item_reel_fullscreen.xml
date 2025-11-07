@@ -145,7 +145,7 @@
         </LinearLayout>
 
         <ImageView
-            android:id="@+id/ivSave"
+            android:id="@+id/deleet"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:padding="8dp"

@@ -1,6 +1,8 @@
 package com.collage.new_strishakti
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -173,19 +175,22 @@ class CommentActivity : AppCompatActivity(), CommentAdapter.CommentClickListener
                     adapter.updateList(allComments)
                     etComment.setText("")
                     replyToParentId = 0
-                    fetchComments()
+
+                    // ✅ Return updated comment count to Reel screen
+                    val updatedCount = allComments.size
+                    val resultIntent = Intent().apply {
+                        putExtra("updatedCommentCount", updatedCount)
+                    }
+                    setResult(Activity.RESULT_OK, resultIntent)
                 } else {
-                    Toast.makeText(
-                        this@CommentActivity,
-                        "Failed to post comment: ${response.message()}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(this@CommentActivity, "Failed to post comment: ${response.message()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@CommentActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
 
     /**
      * Reply to an existing comment
@@ -277,17 +282,19 @@ class CommentActivity : AppCompatActivity(), CommentAdapter.CommentClickListener
                         )
 
                         if (response.isSuccessful) {
-                            // ✅ Remove deleted comment from local list
                             allComments.remove(comment)
                             adapter.updateList(allComments)
 
+                            // ✅ Return updated count to Reel screen
+                            val updatedCount = allComments.size
+                            val resultIntent = Intent().apply {
+                                putExtra("updatedCommentCount", updatedCount)
+                            }
+                            setResult(Activity.RESULT_OK, resultIntent)
+
                             Toast.makeText(this@CommentActivity, "Comment deleted", Toast.LENGTH_SHORT).show()
                         } else {
-                            Toast.makeText(
-                                this@CommentActivity,
-                                "Failed: ${response.message()}",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(this@CommentActivity, "Failed: ${response.message()}", Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: Exception) {
                         Toast.makeText(this@CommentActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -297,6 +304,7 @@ class CommentActivity : AppCompatActivity(), CommentAdapter.CommentClickListener
             .setNegativeButton("No", null)
             .show()
     }
+
 
 
 

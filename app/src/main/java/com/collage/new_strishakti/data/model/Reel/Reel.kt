@@ -20,7 +20,7 @@ data class Reel(
     val totalViews: Int?,
     val userUUID: String?,
     val commentsAndReacts: List<Any>?,
-    val userReactStatus: Boolean?
+    var userReactStatus: Boolean?
 )
 
 data class TopComment(
