@@ -4,8 +4,10 @@ package com.collage.new_strishakti.data.network
 
 import com.collage.new_strishakti.data.model.Comment.CommentModel
 import com.collage.new_strishakti.data.model.Comment.CommentResponse
+import com.collage.new_strishakti.data.model.FriendListResponse
 import com.collage.new_strishakti.data.model.Reel.ReelResponse
 import com.collage.new_strishakti.data.model.Reel.ReelUploadResponse
+import com.collage.new_strishakti.data.model.friend.SearchFriendsResponse
 import com.collage.new_strishakti.data.model.post.AdsResponse
 import com.collage.new_strishakti.data.model.post.AnnouncementResponse
 import com.collage.new_strishakti.data.model.post.CommonResponse
@@ -248,7 +250,20 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<CommonResponse>
 
+    //FriendListResponse
 
+
+    @GET("ssakti/users/friendrequest/getFriendsList/{userId}")
+    suspend fun getFriendsList(
+        @Path("userId") userId: Int,
+        @Header("Authorization") token: String
+    ): Response<FriendListResponse>
+
+    @GET("ssakti/users/user/searchUser/{userName}")
+    suspend fun searchFriends(
+        @Path("userName") userName: String,
+        @Header("Authorization") token: String
+    ): Response<SearchFriendsResponse>
 
 }
 

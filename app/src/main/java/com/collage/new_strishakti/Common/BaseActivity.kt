@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import com.collage.new_strishakti.FriendListActivity
 import com.collage.new_strishakti.R
 import com.collage.new_strishakti.ReelActivity
 import com.google.android.material.appbar.MaterialToolbar
@@ -51,7 +52,10 @@ abstract class BaseActivity : AppCompatActivity() {
                     val intent = Intent(this, ReelActivity::class.java)
                     startActivity(intent)
                 }
-                R.id.nav_profile -> Toast.makeText(this, "Profile clicked", Toast.LENGTH_SHORT).show()
+                R.id.nav_profile -> {
+                    val intent = Intent(this, FriendListActivity::class.java)
+                    startActivity(intent)
+                }
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true

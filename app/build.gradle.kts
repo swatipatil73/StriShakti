@@ -9,6 +9,9 @@ plugins {
 android {
     namespace = "com.collage.new_strishakti"
     compileSdk = 36
+    buildFeatures {
+        viewBinding =true
+    }
 
     defaultConfig {
         applicationId = "com.collage.new_strishakti"
@@ -29,6 +32,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -51,6 +55,7 @@ dependencies {
     implementation(libs.interactivemedia)
     implementation(libs.androidx.paging.common)
     implementation(libs.androidx.leanback.paging)
+    implementation(libs.filament.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -82,7 +87,7 @@ dependencies {
     implementation("de.hdodenhof:circleimageview:3.1.0")
 
     // ExoPlayer for video playback
-    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-exoplayer:1.8.0")
     implementation("androidx.media3:media3-ui:1.8.0")
     implementation("androidx.media3:media3-common:1.8.0")
 
