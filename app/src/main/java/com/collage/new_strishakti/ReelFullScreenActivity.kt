@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -107,36 +108,62 @@ class ReelFullScreenActivity : AppCompatActivity() {
                 startActivity(Intent.createChooser(shareIntent, "Share Reel"))
             },
             onDeleteClick = { reel ->
-                lifecycleScope.launch {
-                    try {
-                        val token = sessionManager.getToken() ?: ""
-                        val repository = PostActionsRepository(ApiClient.apiService)
-                        val result = repository.deletePost(reel.postId, token)
+                AlertDialog.Builder(this@ReelFullScreenActivity)
+                    .setTitle("Delete Reel")
+                    .setMessage("Are you sure you want to delete this reel?")
+                    .setPositiveButton("Yes") { dialog, _ ->
+                        dialog.dismiss()
 
-                        if (result.isSuccess) {
-                            Toast.makeText(
-                                this@ReelFullScreenActivity,
-                                "Reel deleted successfully",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            adapter.refresh()
-                        } else {
-                            Toast.makeText(
-                                this@ReelFullScreenActivity,
-                                "Failed to delete reel",
-                                Toast.LENGTH_SHORT
-                            ).show()
+
+
+                        lifecycleScope.launch {
+                            try {
+                                val token = sessionManager.getToken() ?: ""
+                                val repository = ReelRepository(ApiClient.apiService, token)
+                                val result = repository.deleteReel(reel.postId, token)
+
+
+                                if (result.isSuccess) {
+                                    val response = result.getOrNull()
+                                    if (response?.status == "Success") {
+                                        Toast.makeText(
+                                            this@ReelFullScreenActivity,
+                                            response.message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        adapter.refresh()
+                                    } else {
+                                        Toast.makeText(
+                                            this@ReelFullScreenActivity,
+                                            "Failed to delete reel",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        this@ReelFullScreenActivity,
+                                        "Error deleting reel",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            } catch (e: Exception) {
+
+                                e.printStackTrace()
+                                Toast.makeText(
+                                    this@ReelFullScreenActivity,
+                                    "Something went wrong",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        Toast.makeText(
-                            this@ReelFullScreenActivity,
-                            "Error deleting reel",
-                            Toast.LENGTH_SHORT
-                        ).show()
                     }
-                }
+                    .setNegativeButton("No") { dialog, _ ->
+                        dialog.dismiss() // ❌ Cancel deletion
+                    }
+                    .show()
             }
+
+
 
         )
 
@@ -204,17 +231,13 @@ class ReelFullScreenActivity : AppCompatActivity() {
                 }
             }
         })
+
+
+
     }
 
-    override fun onPause() {
-        super.onPause()
-        for (i in 0 until recyclerView.childCount) {
-            val childHolder = recyclerView.getChildViewHolder(recyclerView.getChildAt(i))
-            if (childHolder is ReelFullScreenAdapter.FullScreenViewHolder) {
-                childHolder.pausePlayer()
-            }
-        }
-    }
+
+
 
     override fun onDestroy() {
         super.onDestroy()

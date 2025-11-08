@@ -30,9 +30,14 @@ class ReelFullScreenAdapter(
             override fun areContentsTheSame(oldItem: Reel, newItem: Reel): Boolean =
                 oldItem == newItem
         }
+
+        // 🔊 Global mute state shared by all reels
+        var isGlobalMuted: Boolean = true
     }
+
     inner class FullScreenViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val playerView: PlayerView = itemView.findViewById(R.id.playerView)
+        private val ivSoundToggle: ImageView = itemView.findViewById(R.id.ivSoundToggle)
         private val tvUserName: TextView = itemView.findViewById(R.id.tvUserName)
         private val ivProfile: ImageView = itemView.findViewById(R.id.ivProfile)
         private val tvDescription: TextView = itemView.findViewById(R.id.tvDescription)
@@ -46,6 +51,7 @@ class ReelFullScreenAdapter(
         private val ivDelete: ImageView = itemView.findViewById(R.id.deleet)
 
         private var player: ExoPlayer? = null
+
 
         fun bind(reel: Reel) {
             // --- User Info ---
@@ -75,6 +81,7 @@ class ReelFullScreenAdapter(
             ivShare.setOnClickListener { onShareClick(reel) }
             ivDelete.setOnClickListener { onDeleteClick(reel) }
 
+
             // --- ExoPlayer Setup ---
             player?.release()
             player = ExoPlayer.Builder(itemView.context).build()
@@ -87,6 +94,40 @@ class ReelFullScreenAdapter(
                 player?.prepare()
                 player?.playWhenReady = true
             }
+
+            // --- Apply global mute state ---
+            applyMuteState(ReelFullScreenAdapter.isGlobalMuted)
+
+            // --- Toggle sound on icon click ---
+            ivSoundToggle.setOnClickListener {
+                ReelFullScreenAdapter.isGlobalMuted = !ReelFullScreenAdapter.isGlobalMuted
+                notifyGlobalMuteChange()
+            }
+
+            // --- Optional: tap video to toggle sound ---
+            playerView.setOnClickListener {
+                ReelFullScreenAdapter.isGlobalMuted = !ReelFullScreenAdapter.isGlobalMuted
+                notifyGlobalMuteChange()
+            }
+        }
+
+        private fun applyMuteState(mute: Boolean) {
+            player?.volume = if (mute) 0f else 1f
+            ivSoundToggle.setImageResource(
+                if (mute) R.drawable.baseline_volume_off_24
+                else R.drawable.outline_volume_up_24
+            )
+        }
+
+        // 🔔 Notify all visible reels to update their sound state
+        private fun notifyGlobalMuteChange() {
+            val recyclerView = itemView.parent as? RecyclerView ?: return
+            for (i in 0 until recyclerView.childCount) {
+                val holder = recyclerView.getChildViewHolder(recyclerView.getChildAt(i))
+                if (holder is FullScreenViewHolder) {
+                    holder.applyMuteState(ReelFullScreenAdapter.isGlobalMuted)
+                }
+            }
         }
 
         fun pausePlayer() = player?.pause()
@@ -96,6 +137,8 @@ class ReelFullScreenAdapter(
             player = null
         }
     }
+
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FullScreenViewHolder {
         val view = LayoutInflater.from(parent.context)

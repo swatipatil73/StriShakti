@@ -242,6 +242,13 @@ interface ApiService {
     ): Response<ReelUploadResponse>
 
 
+    @DELETE("ssakti/users/reels/deletReel/{reelId}")
+    suspend fun deleteReel(
+        @Path("reelId") reelId: Int,
+        @Header("Authorization") token: String
+    ): Response<CommonResponse>
+
+
 
 }
 

@@ -5,6 +5,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.collage.new_strishakti.Paging.ReelPagingSource
 import com.collage.new_strishakti.data.model.Reel.Reel
+import com.collage.new_strishakti.data.model.post.CommonResponse
 import com.collage.new_strishakti.data.network.ApiService
 import kotlinx.coroutines.flow.Flow
 class ReelRepository(
@@ -24,15 +25,18 @@ class ReelRepository(
         ).flow
     }
 
-    suspend fun deletePost(postId: Int, tokenOverride: String? = null): Result<Unit> {
-        // Use passed token if provided, else default to repository token
+    suspend fun deleteReel(reelId: Int, tokenOverride: String? = null): Result<CommonResponse> {
         val authToken = tokenOverride ?: token
         return try {
-            val res = apiService.deletePost(postId, authToken)
-            if (res.isSuccessful) Result.success(Unit)
-            else Result.failure(IllegalStateException(res.errorBody()?.string() ?: "Delete failed"))
+            val res = apiService.deleteReel(reelId, "Bearer $authToken")
+            if (res.isSuccessful && res.body() != null) {
+                Result.success(res.body()!!)
+            } else {
+                Result.failure(Exception("Failed: ${res.errorBody()?.string()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 }
+
