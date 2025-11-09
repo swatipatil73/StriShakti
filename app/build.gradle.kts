@@ -91,7 +91,10 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.8.0")
     implementation("androidx.media3:media3-common:1.8.0")
 
-
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.9.4")
+    implementation("androidx.activity:activity-ktx:1.9.2")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     implementation("androidx.datastore:datastore-preferences:1.1.7")
 }

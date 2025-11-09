@@ -7,6 +7,7 @@ import com.collage.new_strishakti.data.model.Comment.CommentResponse
 import com.collage.new_strishakti.data.model.FriendListResponse
 import com.collage.new_strishakti.data.model.Reel.ReelResponse
 import com.collage.new_strishakti.data.model.Reel.ReelUploadResponse
+import com.collage.new_strishakti.data.model.friend.FriendRequestResponse
 import com.collage.new_strishakti.data.model.friend.SearchFriendsResponse
 import com.collage.new_strishakti.data.model.post.AdsResponse
 import com.collage.new_strishakti.data.model.post.AnnouncementResponse
@@ -39,6 +40,7 @@ import retrofit2.Call
 import retrofit2.http.DELETE
 import retrofit2.http.Header
 import retrofit2.http.Multipart
+import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Query
 
@@ -264,6 +266,28 @@ interface ApiService {
         @Path("userName") userName: String,
         @Header("Authorization") token: String
     ): Response<SearchFriendsResponse>
+
+
+    @GET("ssakti/users/friendrequest/getFriendRequest/{receiverId}")
+    suspend fun getFriendRequests(
+        @Path("receiverId") receiverId: Int,
+        @Header("Authorization") bearerToken: String
+    ):Response<FriendRequestResponse>
+
+
+
+    @PUT("ssakti/users/friendrequest/approveFriendRequest/{friendRequestId}")
+    suspend fun approveFriendRequest(
+        @Path("friendRequestId") friendRequestId: Int,
+        @Header("Authorization") bearerToken: String
+    ): Response<CommonResponse>
+    // ApiService.kt
+    @PUT("ssakti/users/friendrequest/rejectFriendRequest/{friendRequestId}")
+    suspend fun rejectFriendRequest(
+        @Path("friendRequestId") friendRequestId: Int,
+        @Header("Authorization") bearerToken: String
+    ): Response<CommonResponse>
+
 
 }
 
