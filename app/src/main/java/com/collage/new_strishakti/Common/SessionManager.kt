@@ -9,6 +9,7 @@ class SessionManager(context: Context) {
 
     private val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
     private val editor = sharedPreferences.edit()
+    private lateinit var sessionManager: SessionManager
 
     // Save user data
     fun saveUserData(userId: Int, userName: String, token: String) {
@@ -30,7 +31,9 @@ class SessionManager(context: Context) {
     fun getToken(): String? {
         return sharedPreferences.getString("token", "")
     }
-
+    fun getuserUuid(): String? {
+        return sharedPreferences.getString("userUUID", "")
+    }
     // Clear all data (logout)
     fun clear() {
         editor.clear()

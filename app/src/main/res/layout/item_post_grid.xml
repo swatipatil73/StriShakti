@@ -1,0 +1,22 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="120dp"
+    android:layout_margin="1dp">
+
+    <ImageView
+        android:id="@+id/imgPostMedia"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="@android:color/darker_gray" />
+
+    <ImageView
+        android:id="@+id/imgTypeIcon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:visibility="gone"
+        android:src="@drawable/baseline_slow_motion_video_24" />
+</FrameLayout>
+

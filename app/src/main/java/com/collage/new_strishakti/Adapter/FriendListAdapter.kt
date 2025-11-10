@@ -7,7 +7,6 @@ import com.bumptech.glide.Glide
 import com.collage.new_strishakti.R
 import com.collage.new_strishakti.data.model.FriendData
 import com.collage.new_strishakti.databinding.ItemFriendBinding
-
 class FriendListAdapter(
     private var friendList: List<FriendData>,
     private val onClick: (FriendData) -> Unit
@@ -15,6 +14,7 @@ class FriendListAdapter(
 
     inner class FriendViewHolder(val binding: ItemFriendBinding) :
         RecyclerView.ViewHolder(binding.root) {
+
         fun bind(friend: FriendData) {
             binding.tvName.text = "${friend.userFirstName} ${friend.userLastName}"
             Glide.with(binding.ivAvatar.context)
@@ -23,14 +23,17 @@ class FriendListAdapter(
                 .into(binding.ivAvatar)
 
             binding.root.setOnClickListener {
-                onClick(friend)
+                onClick(friend) // Pass FriendData with UUID
             }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
-        val binding =
-            ItemFriendBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemFriendBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
         return FriendViewHolder(binding)
     }
 
@@ -45,3 +48,4 @@ class FriendListAdapter(
         notifyDataSetChanged()
     }
 }
+

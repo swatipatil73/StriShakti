@@ -1,13 +1,20 @@
 package com.collage.new_strishakti
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.view.Gravity
+import android.view.MenuItem
 import android.view.View
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.collage.new_strishakti.Adapter.FriendListAdapter
 import com.collage.new_strishakti.Adapter.SearchUserAdapter
@@ -25,18 +32,19 @@ import com.collage.new_strishakti.databinding.EmptyStateLayoutBinding
 import com.collage.new_strishakti.ui.RegisterViewModel.FriendListViewModel
 
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FriendListActivity : BaseActivity() {
-
     private lateinit var binding: ActivityFriendListBinding
     private lateinit var emptyBinding: EmptyStateLayoutBinding
     private lateinit var viewModel: FriendListViewModel
     private lateinit var sessionManager: SessionManager
-
     private lateinit var friendsAdapter: FriendListAdapter
     private lateinit var searchAdapter: SearchUserAdapter
     private lateinit var bottomNavigationView: BottomNavigationView
-
+    private var friendRequestBadge: TextView? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -55,50 +63,135 @@ class FriendListActivity : BaseActivity() {
 
         emptyBinding = binding.emptyStateLayout
         sessionManager = SessionManager(this)
-
+        setupToolbarWithBadge()
+        fetchFriendRequestCount()
         setupViewModel()
         setupRecycler()
         observeData()
 
-        val userId = sessionManager.getUserId()
-        viewModel.fetchFriendsList(userId)
+        // Fetch friends using logged-in user ID
+        viewModel.fetchFriendsList(sessionManager.getUserId())
 
-        // search-as-you-type
+        // Search functionality
         binding.etSearch.addTextChangedListener { text ->
             viewModel.onSearchTextChanged(text?.toString().orEmpty())
         }
 
-        // Optional: handle back press when empty-state video is playing
         onBackPressedDispatcher.addCallback(this) {
             binding.emptyStateLayout.emptyVideo.stopPlayback()
             finish()
         }
     }
 
-    /** Bell click from BaseActivity */
+
+
+    private fun setupToolbarWithBadge() {
+        setupToolbar(
+            title = "Stri Shakti",
+            showSearch = false,
+            showCreate = true,
+            createIconRes = R.drawable.bell
+        )
+
+        // Create a custom layout for the bell + badge
+        val badgeLayout = FrameLayout(this)
+
+        val bellIcon = ImageView(this).apply {
+            setImageResource(R.drawable.bell)
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val badge = TextView(this).apply {
+            setBackgroundResource(R.drawable.badge_circle) // red circle drawable
+            setTextColor(Color.WHITE)
+            textSize = 12f
+            gravity = Gravity.CENTER
+            visibility = View.GONE // hide initially
+            setPadding(0, 0, 0, 0)
+        }
+
+        val badgeParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            Gravity.TOP
+        ).apply {
+            setMargins(0, 30, 60, 60)
+
+
+        }
+
+        badgeLayout.addView(badge, badgeParams)
+
+        // Add custom view to toolbar menu
+        val menuItem = toolbar.menu.add("Notifications")
+        menuItem.setActionView(badgeLayout)
+        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+
+        // Keep reference to update badge later
+        friendRequestBadge = badge
+
+        // Click listener
+        badgeLayout.setOnClickListener {
+            startActivity(Intent(this, FriendRequestsActivity::class.java))
+        }
+    }
+
+    private fun fetchFriendRequestCount() {
+        val repo = FriendRepository(ApiClient.apiService, sessionManager)
+        lifecycleScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    repo.getFriendRequests(sessionManager.getUserId())
+                }
+                if (response.isSuccessful) {
+                    val count = response.body()?.friendRequestData?.size ?: 0
+                    updateBadge(count)
+                } else {
+                    updateBadge(0)
+                }
+            } catch (e: Exception) {
+                updateBadge(0)
+            }
+        }
+    }
+    private fun updateBadge(count: Int) {
+        if (count > 0) {
+            friendRequestBadge?.visibility = View.VISIBLE
+            friendRequestBadge?.text = count.toString()
+        } else {
+            friendRequestBadge?.visibility = View.GONE
+        }
+    }
+
+
     override fun onCreateClicked() {
         startActivity(Intent(this, FriendRequestsActivity::class.java))
     }
 
     private fun setupViewModel() {
-        val repo = FriendRepository(ApiClient.apiService, SessionManager(this))
+        val repo = FriendRepository(ApiClient.apiService, sessionManager)
         val factory = FriendListViewModelFactory(repo)
         viewModel = ViewModelProvider(this, factory)[FriendListViewModel::class.java]
     }
 
     private fun setupRecycler() {
+        // Friends list adapter click
         friendsAdapter = FriendListAdapter(emptyList()) { friend ->
-            startActivity(
-                Intent(this, UserProfileActivity::class.java)
-                    .putExtra("USER_ID", friend.userId)
-            )
+            val intent = Intent(this, UserProfileActivity::class.java)
+                .putExtra("UUID", friend.userUUID)   // Needed to fetch profile
+                .putExtra("USER_ID", friend.userId)  // Pass userId for friend request
+            startActivity(intent)
         }
 
+        // Search adapter click
         searchAdapter = SearchUserAdapter { user ->
-            startActivity(
-                Intent(this, UserProfileActivity::class.java)
-                    .putExtra("USER_ID", user.userId)
-            )
+            val intent = Intent(this, UserProfileActivity::class.java)
+                .putExtra("UUID", user.userUUID)
+                .putExtra("USER_ID", user.userId)   // Make sure userId exists in search model
+            startActivity(intent)
         }
 
         binding.rvFriends.layoutManager = LinearLayoutManager(this)
@@ -106,9 +199,6 @@ class FriendListActivity : BaseActivity() {
     }
 
     private fun observeData() {
-        // screen state
-        viewModel.isLoading.observe(this) { /* no progress bar here */ }
-
         viewModel.friendsList.observe(this) { list ->
             if (viewModel.searchResults.value == null) {
                 friendsAdapter.updateList(list)
@@ -116,14 +206,14 @@ class FriendListActivity : BaseActivity() {
             }
         }
 
-        viewModel.searchResults.observe(this) { resultsOrNull ->
-            if (resultsOrNull == null) {
+        viewModel.searchResults.observe(this) { results ->
+            if (results == null) {
                 binding.rvFriends.adapter = friendsAdapter
                 toggleEmpty(friendsAdapter.itemCount == 0, "No friends found")
             } else {
                 binding.rvFriends.adapter = searchAdapter
-                searchAdapter.submitList(resultsOrNull)
-                toggleEmpty(resultsOrNull.isEmpty(), "No users found")
+                searchAdapter.submitList(results)
+                toggleEmpty(results.isEmpty(), "No users found")
             }
         }
     }

@@ -11,13 +11,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.collage.new_strishakti.FriendListActivity
+import com.collage.new_strishakti.LoginActivity
 import com.collage.new_strishakti.R
 import com.collage.new_strishakti.ReelActivity
+import com.collage.new_strishakti.data.model.post.CommonResponse
+import com.collage.new_strishakti.data.network.ApiClient
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 
 
 abstract class BaseActivity : AppCompatActivity() {
+    private lateinit var sessionManager: SessionManager
 
     lateinit var toolbar: MaterialToolbar
     private lateinit var drawerLayout: DrawerLayout
@@ -25,6 +29,8 @@ abstract class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        sessionManager = SessionManager(this)
+
     }
 
     fun setupToolbar(
@@ -56,6 +62,64 @@ abstract class BaseActivity : AppCompatActivity() {
                     val intent = Intent(this, FriendListActivity::class.java)
                     startActivity(intent)
                 }
+                R.id.delete -> {
+                    AlertDialog.Builder(this)
+                        .setTitle("Delete Account")
+                        .setMessage("Are you sure you want to permanently delete your account?")
+                        .setPositiveButton("Yes") { dialog, _ ->
+
+                            val userId = sessionManager.getUserId().toString()
+                            val token = "Bearer ${sessionManager.getToken()}"
+
+                            // ✅ Call API using ApiClient.apiService
+                            val call = ApiClient.apiService.deleteUser(userId, token)
+                            call.enqueue(object : retrofit2.Callback<CommonResponse> {
+                                override fun onResponse(
+                                    call: retrofit2.Call<CommonResponse>,
+                                    response: retrofit2.Response<CommonResponse>
+                                ) {
+                                    if (response.isSuccessful && response.body()?.status == "Success") {
+                                        Toast.makeText(
+                                            this@BaseActivity,
+                                            response.body()?.message ?: "Account deleted",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                        // Clear session
+                                        sessionManager.clear()
+
+                                        // Redirect to LoginActivity
+                                        val intent = Intent(this@BaseActivity, LoginActivity::class.java)
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                        startActivity(intent)
+                                        finish()
+                                    } else {
+                                        Toast.makeText(
+                                            this@BaseActivity,
+                                            "Failed to delete account",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+
+                                override fun onFailure(call: retrofit2.Call<CommonResponse>, t: Throwable) {
+                                    Toast.makeText(
+                                        this@BaseActivity,
+                                        "Error: ${t.message}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            })
+
+                        }
+                        .setNegativeButton("No") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                        .show()
+                }
+
+
+
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true

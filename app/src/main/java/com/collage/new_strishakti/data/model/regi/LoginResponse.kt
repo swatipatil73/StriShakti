@@ -7,7 +7,9 @@ data class LoginResponse(
     val userFirstName: String,
     val userLastName: String,
     val userEmail: String,
-    val userId: Int
+    val userId: Int,
+
+    val userUUID: String,
     // Add other fields as needed
 )
 

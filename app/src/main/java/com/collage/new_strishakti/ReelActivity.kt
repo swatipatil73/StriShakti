@@ -12,6 +12,7 @@ import com.collage.new_strishakti.Adapter.ReelAdapter
 import android.content.Intent
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -46,6 +47,7 @@ class ReelActivity :BaseActivity()  {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reel)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
 //        setupToolbar(title = "Stri shakti", showSearch = false, showCreate = true)
         setupToolbar(
             title = "Stri Shakti",

@@ -43,6 +43,7 @@ import kotlinx.coroutines.withContext
 
 import android.os.Handler
 import android.os.Looper
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.collage.new_strishakti.data.model.post.AdsResponse
@@ -82,7 +83,7 @@ class MainActivity : BaseActivity() {
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_main)
-
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
@@ -93,6 +94,12 @@ class MainActivity : BaseActivity() {
         apiService = ApiClient.apiService
 
         setupToolbar(title = "Stri shakti", showSearch = true, showCreate = true)
+        val postHintText = findViewById<TextView>(R.id.postHintText)
+
+        postHintText.setOnClickListener {
+            val dialog = CreatePostDialogFragment()
+            dialog.show(supportFragmentManager, "CreatePostDialog")
+        }
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
         BottomNavigationHelper.setupBottomNavigation(this, bottomNavigationView, R.id.nav_home)

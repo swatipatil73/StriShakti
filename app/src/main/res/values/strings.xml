@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">New_Strishakti</string>
+    <string name="app_name">Stri shakti</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="cover_image">cover</string>
 </resources>

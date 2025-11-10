@@ -23,6 +23,7 @@ import com.collage.new_strishakti.data.model.regi.LoginResponse
 import com.collage.new_strishakti.data.network.ApiClient
 
 import android.widget.*
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import com.collage.new_strishakti.Common.BaseActivity
 import com.collage.new_strishakti.Common.SessionManager
@@ -44,6 +45,7 @@ class LoginActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_login)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)

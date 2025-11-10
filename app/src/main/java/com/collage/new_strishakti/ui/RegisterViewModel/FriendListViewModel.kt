@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 
+
+
 class FriendListViewModel(private val repository: FriendRepository) : ViewModel() {
 
     // ---------------- Friends list ----------------
@@ -111,6 +113,7 @@ class FriendListViewModel(private val repository: FriendRepository) : ViewModel(
         }
     }
 
+    // ---------------- Approve Friend Request ----------------
     sealed class ApproveUI {
         object Loading : ApproveUI()
         data class Success(val position: Int, val message: String) : ApproveUI()
@@ -136,4 +139,56 @@ class FriendListViewModel(private val repository: FriendRepository) : ViewModel(
             }
         }
     }
+
+    // ---------------- Send / Remove Friend ----------------
+    sealed class FriendActionUI {
+        object Idle : FriendActionUI()
+        object Loading : FriendActionUI()
+        data class Success(val message: String) : FriendActionUI()
+        data class Error(val message: String) : FriendActionUI()
+    }
+
+    private val _friendActionState = MutableLiveData<FriendActionUI>(FriendActionUI.Idle)
+    val friendActionState: LiveData<FriendActionUI> = _friendActionState
+
+    fun sendFriendRequest(senderId: Int, receiverId: Int) {
+        _friendActionState.value = FriendActionUI.Loading
+        viewModelScope.launch {
+            try {
+                val res = repository.sendFriendRequest(senderId, receiverId)
+                if (res.isSuccessful) {
+                    val msg = res.body()?.message ?: "Friend request sent successfully"
+                    _friendActionState.value = FriendActionUI.Success(msg)
+                } else {
+                    _friendActionState.value = FriendActionUI.Error("Server error ${res.code()}")
+                }
+            } catch (e: Exception) {
+                _friendActionState.value =
+                    FriendActionUI.Error(e.localizedMessage ?: "Something went wrong")
+            }
+        }
+    }
+
+
+
+    // In FriendListViewModel
+    fun removeFriendRequest(friendRequestId: Int) {
+        viewModelScope.launch {
+            _friendActionState.value = FriendActionUI.Loading
+            try {
+                val response =repository.rejectFriendRequest(friendRequestId)
+                if (response.isSuccessful) {
+                    // Remove friend from friendsList immediately
+                    _friendsList.value = _friendsList.value?.filterNot { it.friendRequestId == friendRequestId }
+
+                    _friendActionState.value = FriendActionUI.Success("Friend removed successfully")
+                } else {
+                    _friendActionState.value = FriendActionUI.Error("Failed to remove friend")
+                }
+            } catch (e: Exception) {
+                _friendActionState.value = FriendActionUI.Error(e.message ?: "Error")
+            }
+        }
+    }
+
 }

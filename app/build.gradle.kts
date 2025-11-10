@@ -62,7 +62,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.1.5")
-
+    implementation("com.google.android.material:material:1.12.0")
     // Kotlin Coroutines
     implementation(libs.kotlinx.coroutines.android)
 

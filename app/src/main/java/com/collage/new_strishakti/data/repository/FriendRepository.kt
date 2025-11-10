@@ -40,6 +40,12 @@ class FriendRepository(
         return apiService.rejectFriendRequest(friendRequestId, "Bearer $token")
     }
 
+    suspend fun sendFriendRequest(senderId: Int, receiverId: Int): Response<CommonResponse> {
+        val token = sessionManager.getToken()
+        return apiService.sendFriendRequest(senderId, receiverId, "Bearer $token")
+    }
+
+
 }
 
 

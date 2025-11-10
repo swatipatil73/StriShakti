@@ -5,6 +5,7 @@ package com.collage.new_strishakti.data.network
 import com.collage.new_strishakti.data.model.Comment.CommentModel
 import com.collage.new_strishakti.data.model.Comment.CommentResponse
 import com.collage.new_strishakti.data.model.FriendListResponse
+import com.collage.new_strishakti.data.model.Profile.UserProfileResponse
 import com.collage.new_strishakti.data.model.Reel.ReelResponse
 import com.collage.new_strishakti.data.model.Reel.ReelUploadResponse
 import com.collage.new_strishakti.data.model.friend.FriendRequestResponse
@@ -282,11 +283,36 @@ interface ApiService {
         @Header("Authorization") bearerToken: String
     ): Response<CommonResponse>
     // ApiService.kt
+
+
+
     @PUT("ssakti/users/friendrequest/rejectFriendRequest/{friendRequestId}")
     suspend fun rejectFriendRequest(
         @Path("friendRequestId") friendRequestId: Int,
         @Header("Authorization") bearerToken: String
     ): Response<CommonResponse>
+
+
+    @GET("ssakti/users/user/userAbout/{uuid}")
+    suspend fun getUserProfile(
+        @Path("uuid") uuid: String,
+        @Header("Authorization") token: String
+    ): Response<UserProfileResponse>
+
+
+
+    @POST("ssakti/users/friendrequest/sendFriendRequest/{senderId}/{receiverId}")
+    suspend fun sendFriendRequest(
+        @Path("senderId") senderId: Int,
+        @Path("receiverId") receiverId: Int,
+        @Header("Authorization") token: String
+    ): Response<CommonResponse>
+
+    @DELETE("ssakti/users/user/deleteUser/{userId}")
+    fun deleteUser(
+        @Path("userId") userId: String,
+        @Header("Authorization") token: String
+    ): Call<CommonResponse>
 
 
 }

@@ -1,7 +1,9 @@
 package com.collage.new_strishakti.Common
 
 import android.content.Intent
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.collage.new_strishakti.LoginActivity
 import com.collage.new_strishakti.MainActivity
 import com.collage.new_strishakti.R
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -36,8 +38,25 @@ object BottomNavigationHelper {
                    // activity.startActivity(Intent(activity, NotificationsActivity::class.java))
                 }
                 R.id.nav_profile -> {
-                    //activity.startActivity(Intent(activity, ProfileActivity::class.java))
+                    AlertDialog.Builder(activity)
+                        .setTitle("Logout")
+                        .setMessage("Are you sure you want to logout?")
+                        .setPositiveButton("Yes") { dialog, _ ->
+                            // Clear session or preferences
+
+
+                            // Navigate to login screen
+                            val intent = Intent(activity, LoginActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            activity.startActivity(intent)
+                            activity.finish()
+                        }
+                        .setNegativeButton("No") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                        .show()
                 }
+
                 else -> return@setOnItemSelectedListener false
             }
             // Optional: Remove animation for seamless feel
@@ -46,3 +65,5 @@ object BottomNavigationHelper {
         }
     }
 }
+
+
