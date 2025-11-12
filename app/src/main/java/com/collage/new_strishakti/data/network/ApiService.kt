@@ -128,7 +128,7 @@ interface ApiService {
     @GET("ssakti/users/reels/getAllReels")
     suspend fun getAllReels(
         @Query("page") page: Int,
-        @Query("size") size: Int,
+        @Query("size") size: Int=5,
         @Header("Authorization") token: String
     ): Response<ReelsResponse>
 

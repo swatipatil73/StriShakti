@@ -1,27 +1,29 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-parcelize") // <-- add this here manually
+    id("kotlin-parcelize")
 }
-
-
 
 android {
     namespace = "com.collage.new_strishakti"
     compileSdk = 36
-    buildFeatures {
-        viewBinding =true
-    }
 
     defaultConfig {
         applicationId = "com.collage.new_strishakti"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 19
+        versionName = "5.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ✅ Ship only ARM. This keeps the x86_64 Filament .so out of your bundle.
+//        ndk {
+//            abiFilters += listOf("arm64-v8a") // add "armeabi-v7a" only if you still support 32-bit
+//        }
     }
+
+    buildFeatures { viewBinding = true }
 
     buildTypes {
         release {
@@ -36,33 +38,44 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-
         isCoreLibraryDesugaringEnabled = true
-
     }
-    kotlinOptions {
-        jvmTarget = "11"
+
+    kotlin {
+        compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11) }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+            // ✅ Belt & suspenders: strip any leftover x86 libs from transitive deps.
+            excludes += listOf("**/x86/**", "**/x86_64/**")
+        }
     }
 }
 
 dependencies {
+    // ❗ Use ONE coordinate; you currently pull Filament twice.
+    // Option A: keep Sceneform Filament:
+    api("com.google.ar.sceneform:filament-android:1.17.1")
+    // and REMOVE this if it points to the same thing:
+    // implementation(libs.filament.android)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.mediation.test.suite)
-    implementation(libs.interactivemedia)
+
     implementation(libs.androidx.paging.common)
     implementation(libs.androidx.leanback.paging)
-    implementation(libs.filament.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.1.5")
-    implementation("com.google.android.material:material:1.12.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
     // Kotlin Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
@@ -70,31 +83,31 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
-    // Retrofit for Networking
+    // Retrofit / OkHttp
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
-
-    // OkHttp for logging
     implementation(libs.logging.interceptor)
 
-    // Material Components
-    implementation(libs.material.v190)
+    // Material
+    implementation("com.google.android.material:material:1.12.0")
 
-    // Glide setup
+    // Glide
     implementation("com.github.bumptech.glide:glide:5.0.5")
 
-    // CircleImageView (for profile image)
+    // CircleImageView
     implementation("de.hdodenhof:circleimageview:3.1.0")
 
-    // ExoPlayer for video playback
+    // ExoPlayer / Media3
     implementation("androidx.media3:media3-exoplayer:1.8.0")
     implementation("androidx.media3:media3-ui:1.8.0")
     implementation("androidx.media3:media3-common:1.8.0")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.9.4")
-    implementation("androidx.activity:activity-ktx:1.9.2")
+    implementation("androidx.activity:activity-ktx:1.11.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 
-    implementation("androidx.datastore:datastore-preferences:1.1.7")
+    // Ads (pick ONE)
+    implementation("com.google.android.gms:play-services-ads:23.+")
+    // implementation("com.google.android.gms:play-services-ads-lite:23.+")
 }

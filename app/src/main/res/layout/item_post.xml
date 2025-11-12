@@ -134,6 +134,7 @@
                 <ImageView
                     android:id="@+id/imgShare"
                     android:layout_width="24dp"
+                    android:visibility="gone"
                     android:layout_height="24dp"
                     android:src="@drawable/baseline_send_24" />
             </LinearLayout>

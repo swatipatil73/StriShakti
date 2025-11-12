@@ -49,6 +49,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.collage.new_strishakti.data.model.post.AdsResponse
 import com.collage.new_strishakti.data.model.post.AnnouncementResponse
 import com.collage.new_strishakti.data.model.post.PostActionsVMFactory
+import com.collage.new_strishakti.data.network.safeApiCall
 import com.collage.new_strishakti.data.repository.PostActionsRepository
 import com.collage.new_strishakti.ui.RegisterViewModel.PostActionEvent
 import com.collage.new_strishakti.ui.RegisterViewModel.PostActionsViewModel
@@ -62,7 +63,7 @@ class MainActivity : BaseActivity() {
     private lateinit var emptyTextView: TextView
     private lateinit var recyclerView: RecyclerView
     private lateinit var bottomNavigationView: BottomNavigationView
-
+    private var firstPageHandled = false
     private lateinit var adapter: HomeFeedAdapter
     private lateinit var viewModel: HomeViewModel
     private lateinit var sessionManager: SessionManager
@@ -76,6 +77,9 @@ class MainActivity : BaseActivity() {
     private var hasNextPage = true
     private var isLoading = false
     private val pageSize = 5
+    private var pageSizeFirst = 2      // 👈 first page only 2
+    private val pageSizeNext  = 5      // 👈 later pages as before
+
     private val postCategory = "YOUR_POST_CATEGORY"
     // replace this
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -154,18 +158,36 @@ class MainActivity : BaseActivity() {
         recyclerView.setHasFixedSize(true)
         recyclerView.setItemViewCacheSize(10)
 
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-                val layoutManager = rv.layoutManager as LinearLayoutManager
-                val lastVisible = layoutManager.findLastVisibleItemPosition()
-                val totalItemCount = layoutManager.itemCount
+//        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+//            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+//                val layoutManager = rv.layoutManager as LinearLayoutManager
+//                val lastVisible = layoutManager.findLastVisibleItemPosition()
+//                val totalItemCount = layoutManager.itemCount
+//
+//                // Trigger pagination when reaching near end
+//                if (!isLoading && hasNextPage && lastVisible >= totalItemCount - 2) {
+//                    loadHomePosts()
+//                }
+//            }
+//        })
 
-                // Trigger pagination when reaching near end
-                if (!isLoading && hasNextPage && lastVisible >= totalItemCount - 2) {
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            private var lastTriggerTime = 0L
+            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                val now = System.currentTimeMillis()
+                if (now - lastTriggerTime < 350) return   // 👈 debounce
+
+                val lm = rv.layoutManager as LinearLayoutManager
+                val lastVisible = lm.findLastVisibleItemPosition()
+                val total = lm.itemCount
+
+                if (!isLoading && hasNextPage && lastVisible >= total - 2) {
+                    lastTriggerTime = now
                     loadHomePosts()
                 }
             }
         })
+
 
     }
 
@@ -177,21 +199,26 @@ class MainActivity : BaseActivity() {
         viewModel = ViewModelProvider(this, factory)[HomeViewModel::class.java]
     }
 
+
+
     private fun observeViewModel() {
         viewModel.homeFeedItems.observe(this) { items ->
             adapter.submitList(items)
-            progressBar.visibility = View.GONE
-            emptyTextView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+            if (firstPageHandled) { // prevent early "no posts" flash
+                emptyTextView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+            }
         }
 
-        viewModel.isLoading.observe(this) { isLoading ->
-            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        viewModel.isLoading.observe(this) { loading ->
+            progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+            if (!loading) firstPageHandled = true
         }
 
-        viewModel.error.observe(this) { message ->
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        viewModel.error.observe(this) { msg ->
+            if (!msg.isNullOrBlank()) Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
     }
+
     private fun observePostActions() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -255,76 +282,152 @@ class MainActivity : BaseActivity() {
 
     // ------------------------------------------------------------------------------------------
     // 🔹 Load Posts (Optimized)
+//    private fun loadHomePosts() {
+//        if (isLoading || !hasNextPage) return
+//        isLoading = true
+//
+//        val isFirstPage = nextCursor == 0L
+//
+//        if (isFirstPage) {
+//            progressBar.visibility = View.VISIBLE
+//            emptyTextView.visibility = View.GONE
+//        } else {
+//            // 🧠 Delay ensures RecyclerView renders footer before API response arrives
+//            Handler(Looper.getMainLooper()).post {
+//                adapter.showLoading()
+//            }
+//        }
+//
+//        lifecycleScope.launch(Dispatchers.IO) {
+//            try {
+//                val cursor = nextCursor ?: 0L
+//                val response = apiService.getHomePosts(userId, cursor, pageSize, token)
+//
+//                if (response.isSuccessful) {
+//                    val body = response.body()
+//                    val posts = body?.postsData ?: emptyList()
+//
+//                    nextCursor = body?.nextCursor
+//                    hasNextPage = body?.hasNextPage ?: false
+//
+//                    val updatedList = adapter.currentList.toMutableList()
+//
+//                    // remove loading if already visible
+//                    updatedList.removeAll { it is HomeFeedItem.LoadingItem }
+//
+//                    val postItems = posts.map { HomeFeedItem.PostItem(it) }
+//                    updatedList.addAll(postItems)
+//
+//                    // add reel section only after first 5 posts on first load
+//                    if (cursor == 0L) {
+//                        val reelsResponse = apiService.getAllReels(0, 10, token)
+//                        if (reelsResponse.isSuccessful) {
+//                            val reels = reelsResponse.body()?.postsData ?: emptyList()
+//                            if (reels.isNotEmpty()) {
+//                                val insertIndex = if (updatedList.size >= 5) 5 else updatedList.size
+//                                updatedList.add(insertIndex, HomeFeedItem.ReelSection(reels))
+//                            }
+//                        }
+//                    }
+//
+//                    withContext(Dispatchers.Main) {
+//                        progressBar.visibility = View.GONE
+//                        adapter.submitList(updatedList)
+//                        emptyTextView.visibility =
+//                            if (updatedList.isEmpty()) View.VISIBLE else View.GONE
+//                    }
+//
+//                } else {
+//                    hasNextPage = false
+//                    withContext(Dispatchers.Main) {
+//                        Toast.makeText(this@MainActivity, "Failed to load posts", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//            } catch (e: Exception) {
+//                e.printStackTrace()
+//                withContext(Dispatchers.Main) {
+//                    Toast.makeText(this@MainActivity, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+//                }
+//            } finally {
+//                withContext(Dispatchers.Main) {
+//                    adapter.hideLoading()
+//                    progressBar.visibility = View.GONE
+//                    isLoading = false
+//                }
+//            }
+//        }
+//    }
+
+
     private fun loadHomePosts() {
         if (isLoading || !hasNextPage) return
         isLoading = true
 
         val isFirstPage = nextCursor == 0L
-
         if (isFirstPage) {
             progressBar.visibility = View.VISIBLE
             emptyTextView.visibility = View.GONE
         } else {
-            // 🧠 Delay ensures RecyclerView renders footer before API response arrives
-            Handler(Looper.getMainLooper()).post {
-                adapter.showLoading()
-            }
+            Handler(Looper.getMainLooper()).post { adapter.showLoading() }
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val cursor = nextCursor ?: 0L
-                val response = apiService.getHomePosts(userId, cursor, pageSize, token)
+                val size = if (isFirstPage) pageSizeFirst else pageSizeNext
 
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    val posts = body?.postsData ?: emptyList()
+                // ── 1) Posts with safeApiCall
+                val result = safeApiCall { apiService.getHomePosts(userId, cursor, size, token) }
 
-                    nextCursor = body?.nextCursor
-                    hasNextPage = body?.hasNextPage ?: false
+                result.onFailure { error ->
+                    withContext(Dispatchers.Main) {
+                        adapter.hideLoading()
+                        progressBar.visibility = View.GONE
+                        Toast.makeText(this@MainActivity, error.message ?: "Failed to load posts", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
 
-                    val updatedList = adapter.currentList.toMutableList()
+                val body = result.getOrNull()!!
+                val posts = body.postsData ?: emptyList()
+                nextCursor = body.nextCursor
+                hasNextPage = body.hasNextPage == true
 
-                    // remove loading if already visible
-                    updatedList.removeAll { it is HomeFeedItem.LoadingItem }
+                // ── 2) FIRST: show posts immediately (UI thread)
+                withContext(Dispatchers.Main) {
+                    val updated = adapter.currentList.toMutableList()
+                    updated.removeAll { it is HomeFeedItem.LoadingItem }
+                    updated.addAll(posts.map { HomeFeedItem.PostItem(it) })
+                    adapter.submitList(updated)
+                    progressBar.visibility = View.GONE
+                    emptyTextView.visibility = if (updated.isEmpty()) View.VISIBLE else View.GONE
+                }
 
-                    val postItems = posts.map { HomeFeedItem.PostItem(it) }
-                    updatedList.addAll(postItems)
-
-                    // add reel section only after first 5 posts on first load
-                    if (cursor == 0L) {
-                        val reelsResponse = apiService.getAllReels(0, 10, token)
-                        if (reelsResponse.isSuccessful) {
-                            val reels = reelsResponse.body()?.postsData ?: emptyList()
+                // ── 3) THEN: fetch reels asynchronously (only for first page)
+                if (cursor == 0L) {
+                    launch(Dispatchers.IO) {
+                        val reelsResult = safeApiCall { apiService.getAllReels(0, 5, token) }
+                        reelsResult.onSuccess { reelsResp ->
+                            val reels = reelsResp.postsData.orEmpty()
                             if (reels.isNotEmpty()) {
-                                val insertIndex = if (updatedList.size >= 5) 5 else updatedList.size
-                                updatedList.add(insertIndex, HomeFeedItem.ReelSection(reels))
+                                withContext(Dispatchers.Main) {
+                                    val list = adapter.currentList.toMutableList()
+                                    val insertIndex = if (list.size >= 5) 5 else list.size
+                                    list.add(insertIndex, HomeFeedItem.ReelSection(reels))
+                                    adapter.submitList(list)
+                                }
                             }
                         }
-                    }
-
-                    withContext(Dispatchers.Main) {
-                        progressBar.visibility = View.GONE
-                        adapter.submitList(updatedList)
-                        emptyTextView.visibility =
-                            if (updatedList.isEmpty()) View.VISIBLE else View.GONE
-                    }
-
-                } else {
-                    hasNextPage = false
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "Failed to load posts", Toast.LENGTH_SHORT).show()
+                        // onFailure: ignore silently; feed already visible
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@MainActivity, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
             } finally {
                 withContext(Dispatchers.Main) {
                     adapter.hideLoading()
-                    progressBar.visibility = View.GONE
                     isLoading = false
                 }
             }

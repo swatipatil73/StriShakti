@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.0"
+agp = "8.13.1"
 kotlin = "2.2.21"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -40,6 +40,7 @@ mediation-test-suite = { group = "com.google.android.ads", name = "mediation-tes
 interactivemedia = { group = "com.google.ads.interactivemedia.v3", name = "interactivemedia", version.ref = "interactivemedia" }
 androidx-paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "pagingCommon" }
 androidx-leanback-paging = { group = "androidx.leanback", name = "leanback-paging", version.ref = "leanbackPaging" }
+#noinspection Aligned16KB,Aligned16KB
 filament-android = { group = "com.google.ar.sceneform", name = "filament-android", version.ref = "filamentAndroid" }
 
 [plugins]

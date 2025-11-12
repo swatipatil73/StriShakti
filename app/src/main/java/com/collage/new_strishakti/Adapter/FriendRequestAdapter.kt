@@ -23,10 +23,10 @@ class FriendRequestAdapter(
     }
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
-        val ivUser: CircleImageView = v.findViewById(R.id.ivUserImage)
+        val ivUser: CircleImageView = v.findViewById(R.id.imgAvatar)
         val tvFullName: TextView = v.findViewById(R.id.tvFullName)
         val btnConfirm: Button = v.findViewById(R.id.btnConfirm)
-        val btnDelete: Button = v.findViewById(R.id.btnDelete)
+        val btnDelete: Button = v.findViewById(R.id.btnReject)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {

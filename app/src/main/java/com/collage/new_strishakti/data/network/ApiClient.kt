@@ -12,7 +12,7 @@ object ApiClient {
 
 
   //
-    private const val BASE_URL = "https://backend.strishakti.org/"
+  private const val BASE_URL = "https://backend.strishakti.org/"
  //private const val BASE_URL = "https://dev.api.strishakti.org/"
 
     private val logging = HttpLoggingInterceptor().apply {

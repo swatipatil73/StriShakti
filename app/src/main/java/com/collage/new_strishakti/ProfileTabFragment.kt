@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
@@ -66,6 +67,7 @@ class ProfileTabFragment : Fragment() {
     ): View {
         _binding = FragmentProfileTabBinding.inflate(inflater, container, false)
         return binding.root
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

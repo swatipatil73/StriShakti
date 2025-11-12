@@ -66,7 +66,7 @@ class FriendRequestsActivity : BaseActivity() {
                 val vh = binding.rvRequests.findViewHolderForAdapterPosition(pos)
                 val row = vh?.itemView
                 val btnConfirm = row?.findViewById<Button>(R.id.btnConfirm)
-                val btnDelete  = row?.findViewById<Button>(R.id.btnDelete)
+                val btnDelete  = row?.findViewById<Button>(R.id.btnReject)
                 btnConfirm?.isEnabled = false
                 btnDelete?.isEnabled  = false
 
@@ -117,7 +117,7 @@ class FriendRequestsActivity : BaseActivity() {
                 val vh = binding.rvRequests.findViewHolderForAdapterPosition(pos)
                 val row = vh?.itemView
                 val btnConfirm = row?.findViewById<Button>(R.id.btnConfirm)
-                val btnDelete  = row?.findViewById<Button>(R.id.btnDelete)
+                val btnDelete  = row?.findViewById<Button>(R.id.btnReject)
                 btnConfirm?.isEnabled = false
                 btnDelete?.isEnabled  = false
 

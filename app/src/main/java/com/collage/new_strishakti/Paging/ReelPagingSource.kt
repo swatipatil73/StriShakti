@@ -9,25 +9,28 @@ import com.collage.new_strishakti.data.model.Reel.Reel
 import com.collage.new_strishakti.data.model.Reel.ReelResponse
 import com.collage.new_strishakti.data.network.ApiService
 
+
 class ReelPagingSource(
     private val apiService: ApiService,
     private val token: String
 ) : PagingSource<Int, Reel>() {
 
+    companion object {
+        private const val PAGE_SIZE = 5 // 👈 fixed size per API call
+    }
+
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Reel> {
         return try {
             val currentPage = params.key ?: 0
-            val pageSize = params.loadSize
 
-            // Call API
+            // ✅ Always request 5 reels (ignore loadSize)
             val response: ReelResponse = apiService.getReels(
                 token = "Bearer $token",
                 page = currentPage,
-                size = pageSize
+                size = PAGE_SIZE
             )
 
-            // Map nullable fields safely
-            val reels: List<Reel> = response.postsData.map { reel ->
+            val reels = response.postsData.map { reel ->
                 reel.copy(
                     userProfileImageUrl = reel.userProfileImageUrl ?: "",
                     postType = reel.postType ?: "",
@@ -53,7 +56,6 @@ class ReelPagingSource(
                 prevKey = if (currentPage == 0) null else currentPage - 1,
                 nextKey = if (response.hasNextPage) currentPage + 1 else null
             )
-
         } catch (e: Exception) {
             e.printStackTrace()
             LoadResult.Error(e)
@@ -67,4 +69,3 @@ class ReelPagingSource(
         }
     }
 }
-

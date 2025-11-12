@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.collage.new_strishakti.Adapter.FriendListAdapter
@@ -65,6 +66,7 @@ class FriendTabFragment : Fragment() {
         _binding = FragmentFriendTabBinding.inflate(inflater, container, false)
         emptyBinding = binding.emptyStateLayout
         return binding.root
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

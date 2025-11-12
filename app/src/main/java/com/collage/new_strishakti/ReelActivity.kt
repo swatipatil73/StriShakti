@@ -70,7 +70,8 @@ class ReelActivity :BaseActivity()  {
             gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
         }
         recyclerView.layoutManager = sglm
-        recyclerView.setHasFixedSize(true)
+        recyclerView.setHasFixedSize(false) // 👈 disables fixed-size optimization
+
         recyclerView.addItemDecoration(GridSpacingDecoration(2)) // 2dp gap
 
         adapter = ReelAdapter { reel -> openFullScreenReel(reel) }

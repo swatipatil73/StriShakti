@@ -14,8 +14,8 @@ class HomeRepository(private val apiService: ApiService) {
         userId: Long,
         token: String,
         postCategory: String? = null,
-        postPageSize: Int = 5,
-        reelPageSize: Int = 10
+        postPageSize: Int = 2,
+        reelPageSize: Int = 5
     ): Result<HomeFeedResult> = withContext(Dispatchers.IO) {
         try {
             // Start all network calls in parallel
@@ -33,7 +33,7 @@ class HomeRepository(private val apiService: ApiService) {
             }
             val postsDeferred = async { apiService.getHomePosts(userId, 0, postPageSize, token) }
             val reelsDeferred = async {
-                try { apiService.getAllReels(0, reelPageSize, token) }
+                try { apiService.getAllReels(0, 5, token) }
                 catch (e: Exception) { null }
             }
 
