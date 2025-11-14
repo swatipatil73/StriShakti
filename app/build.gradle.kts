@@ -88,6 +88,9 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
 
+    implementation("com.squareup.okhttp3:okhttp:5.3.0")
+
+
     // Material
     implementation("com.google.android.material:material:1.12.0")
 
@@ -110,4 +113,18 @@ dependencies {
     // Ads (pick ONE)
     implementation("com.google.android.gms:play-services-ads:23.+")
     // implementation("com.google.android.gms:play-services-ads-lite:23.+")
+
+    //
+    // STOMP over WebSocket client for Android (NaikSoftware StompProtocolAndroid)
+    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
+// Java-WebSocket (one of the transports supported by StompProtocolAndroid)
+    implementation("org.java-websocket:Java-WebSocket:1.6.0")
+
+    // RxJava / RxAndroid required by NaikSoftware Stomp client
+    implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
+
+
+
+
 }

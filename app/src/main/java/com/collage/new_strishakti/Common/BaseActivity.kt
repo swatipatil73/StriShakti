@@ -10,6 +10,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import com.collage.new_strishakti.ChatActivity
+import com.collage.new_strishakti.ChatMainActivity
 import com.collage.new_strishakti.FriendListActivity
 import com.collage.new_strishakti.LoginActivity
 import com.collage.new_strishakti.R
@@ -60,6 +62,10 @@ abstract class BaseActivity : AppCompatActivity() {
                 }
                 R.id.nav_profile -> {
                     val intent = Intent(this, FriendListActivity::class.java)
+                    startActivity(intent)
+                }
+                R.id.chat -> {
+                    val intent = Intent(this, ChatMainActivity::class.java)
                     startActivity(intent)
                 }
                 R.id.delete -> {
