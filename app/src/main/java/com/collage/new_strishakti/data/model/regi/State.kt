@@ -19,7 +19,10 @@ data class District(
         get() = districtId  // Custom getter
 
     val customDistrictName: String
-        get() = districtName.lowercase()  // Example: return districtName in lowercase
+        get() = districtName.lowercase()
+    override fun toString(): String {
+        return districtName ?: "Select district"
+    }// Example: return districtName in lowercase
 }
 
 data class Taluka(

@@ -27,6 +27,12 @@
         android:theme="@style/Theme.New_Strishakti"
         tools:targetApi="31">
         <activity
+            android:name=".EventDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".EventListActivity"
+            android:exported="false" />
+        <activity
             android:name=".FriendRequestsActivity"
             android:exported="false" />
         <activity
@@ -44,8 +50,7 @@
         <activity
             android:name=".CommentActivity"
             android:exported="false"
-
-            android:windowSoftInputMode="adjustPan"/>
+            android:windowSoftInputMode="adjustPan" />
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

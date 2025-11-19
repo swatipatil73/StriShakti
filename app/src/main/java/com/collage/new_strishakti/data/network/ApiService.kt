@@ -4,6 +4,11 @@ package com.collage.new_strishakti.data.network
 
 import com.collage.new_strishakti.data.model.Comment.CommentModel
 import com.collage.new_strishakti.data.model.Comment.CommentResponse
+import com.collage.new_strishakti.data.model.Event.DeleteResponse
+import com.collage.new_strishakti.data.model.Event.EventDetailResponse
+import com.collage.new_strishakti.data.model.Event.EventResponse
+import com.collage.new_strishakti.data.model.Event.JoinEventResponse
+import com.collage.new_strishakti.data.model.Event.ParticipantResponse
 import com.collage.new_strishakti.data.model.FriendListResponse
 import com.collage.new_strishakti.data.model.Profile.UserProfileResponse
 import com.collage.new_strishakti.data.model.Reel.ReelResponse
@@ -313,6 +318,57 @@ interface ApiService {
         @Path("userId") userId: String,
         @Header("Authorization") token: String
     ): Call<CommonResponse>
+
+
+    @GET("ssakti/users/event/getAllEvents/{userId}/{districtId}")
+    suspend fun getEvents(
+        @Path("userId") userId: Int,
+        @Path("districtId") districtId: Int,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 5,
+        @Header("Authorization") authorization: String? = null
+    ): Response<EventResponse>
+
+    @DELETE("ssakti/users/event/delete/{hostUserId}/{eventId}")
+    suspend fun deleteEvent(
+        @Path("hostUserId") hostUserId: Int,
+        @Path("eventId") eventId: Int,
+        @Header("Authorization") authorization: String? = null
+    ): Response<DeleteResponse>
+
+    @GET("ssakti/users/event/getDetails/{userId}/{eventUUID}")
+    suspend fun getEventDetails(
+        @Path("userId") userId: Int,
+        @Path("eventUUID") eventUUID: String,
+        @Header("Authorization") token: String?
+    ): Response<EventDetailResponse>
+
+
+
+    @POST("ssakti/users/participant/add/{eventId}")
+    suspend fun joinEvent(
+        @Header("Authorization") token: String,
+        @Path("eventId") eventId: Int
+    ): Response<JoinEventResponse>
+
+
+    // 2️⃣ GET PARTICIPANTS
+
+    @GET("ssakti/users/participant/getParticipants/{eventUUID}")
+    suspend fun getParticipants(
+        @Header("Authorization") token: String,
+        @Path("eventUUID") eventUUID: String,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): Response<ParticipantResponse>
+
+
+    @DELETE("ssakti/users/participant/exitEvent/{eventId}/{userId}")
+    suspend fun exitEvent(
+        @Path("eventId") eventId: Int,
+        @Path("userId") userId: Int,
+        @Header("Authorization") token: String
+    ): Response<CommonResponse>
 
 
 }
