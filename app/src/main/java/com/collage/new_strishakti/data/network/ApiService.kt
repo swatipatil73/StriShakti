@@ -363,12 +363,13 @@ interface ApiService {
     ): Response<ParticipantResponse>
 
 
-    @DELETE("ssakti/users/participant/exitEvent/{eventId}/{userId}")
+    @DELETE("ssakti/users/participant/exitEvent/{userId}/{eventId}")
     suspend fun exitEvent(
-        @Path("eventId") eventId: Int,
+        @Header("Authorization") authToken: String,
         @Path("userId") userId: Int,
-        @Header("Authorization") token: String
+        @Path("eventId") eventId: Int
     ): Response<CommonResponse>
+
 
 
 }

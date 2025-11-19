@@ -59,7 +59,12 @@ class EventViewModel(
     private val _participantsEmpty = MutableLiveData<Boolean>(false)
     val participantsEmpty: LiveData<Boolean> = _participantsEmpty
 
+    private val _exitLoading = MutableLiveData<Boolean>(false)
+    val exitLoading: LiveData<Boolean> = _exitLoading
 
+    // Pair(success, message)
+    private val _exitResult = MutableLiveData<Pair<Boolean, String?>>()
+    val exitResult = _exitResult
     // paging state
     private var currentPage = 0
     private var currentSize = 5
@@ -234,33 +239,43 @@ class EventViewModel(
         }
     }
 
+    fun exitEvent(userId: Int, eventId: Int, authToken: String, isHost: Boolean) {
+        _exitLoading.value = true
+        viewModelScope.launch {
+            try {
+                val (success, msg) = repository.exitEvent(userId, eventId, authToken)
+                _exitResult.value = Pair(success, msg)
 
-    // Add these inside EventViewModel
+                if (success) {
+                    // Use the backing MutableLiveData (_participants) to modify the list
+                    val current = _participants.value?.toMutableList() ?: mutableListOf()
+                    val removed = current.removeAll { it.userId == userId }
+                    if (removed) {
+                        _participants.value = current
+                    }
 
+                    // Update EventDetailResponse via the backing MutableLiveData (_details)
+                    val about = _details.value?.about?.firstOrNull()
+                    if (!isHost && about != null) {
+                        about.isParticipant = false
+                        // reassign the same object to trigger observers
+                        _details.value = _details.value
+                    }
+                }
+            } catch (t: Throwable) {
+                // optional: surface error via _exitResult
+                _exitResult.value = Pair(false, t.localizedMessage ?: "Error")
+            } finally {
+                _exitLoading.value = false
+            }
+        }
+    }
 
-
-
-//    fun exitEvent(eventId: Int, userId: Int, token: String, callback: (Boolean) -> Unit) {
-//        viewModelScope.launch {
-//            try {
-//                val response = api.exitEvent(eventId, userId, "Bearer $token")
-//                if (response.isSuccessful && response.body()?.status == "Success") {
-//                    callback(true)
-//                    // reload participants list after exit
-//                    loadParticipants(eventId, token)
-//                } else {
-//                    callback(false)
-//                }
-//            } catch (e: Exception) {
-//                callback(false)
-//            }
-//        }
-//    }
-
-//    // Delete participant (host only) can call the same API
-//    fun deleteParticipant(eventId: Int, userId: Int, token: String, callback: (Boolean) -> Unit) {
-//        exitEvent(eventId, userId, token, callback) // same API call
-//    }
+    fun removeParticipantLocally(userId: Int) {
+        val current = _participants.value?.toMutableList() ?: return
+        val removed = current.removeAll { it.userId == userId }
+        if (removed) _participants.value = current
+    }
 
     private fun <T> parseError(response: Response<T>): String {
         return "API error: ${response.code()} ${response.message()}"

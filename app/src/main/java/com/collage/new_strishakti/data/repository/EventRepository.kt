@@ -8,7 +8,9 @@ import com.collage.new_strishakti.data.model.Event.ParticipantResponse
 import com.collage.new_strishakti.data.model.post.CommonResponse
 import com.collage.new_strishakti.data.model.regi.District
 import com.collage.new_strishakti.data.network.ApiClient
+import retrofit2.HttpException
 import retrofit2.Response
+import java.io.IOException
 
 class EventRepository {
 
@@ -67,8 +69,25 @@ class EventRepository {
         val authHeader = if (token.startsWith("Bearer ")) token else "Bearer $token"
         return ApiClient.apiService.getParticipants(authHeader, eventUUID, page, size)
     }
-    suspend fun exitEvent(userId: Int, eventId: Int, token: String): Response<CommonResponse> {
-        return api.exitEvent(userId, eventId, "Bearer $token") // add Bearer if needed
+    suspend fun exitEvent(userId: Int, eventId: Int, authToken: String): Pair<Boolean, String?> {
+        return try {
+            val response = api.exitEvent(authToken, userId, eventId)
+            if (response.isSuccessful) {
+                val body: CommonResponse? = response.body()
+                Pair(true, body?.message ?: "Success")
+            } else {
+                // try to read server error message if present
+                val err = response.errorBody()?.string() ?: response.message()
+                Pair(false, err)
+            }
+        } catch (e: IOException) {
+            // network / timeout
+            Pair(false, e.localizedMessage ?: "Network error")
+        } catch (e: HttpException) {
+            Pair(false, e.localizedMessage ?: "Server error")
+        } catch (e: Exception) {
+            Pair(false, e.localizedMessage ?: "Unknown error")
+        }
     }
 
 
