@@ -4,7 +4,9 @@ package com.collage.new_strishakti.data.network
 
 import com.collage.new_strishakti.data.model.Comment.CommentModel
 import com.collage.new_strishakti.data.model.Comment.CommentResponse
+import com.collage.new_strishakti.data.model.Event.CreateEventResponse
 import com.collage.new_strishakti.data.model.Event.DeleteResponse
+import com.collage.new_strishakti.data.model.Event.EventCategoryResponse
 import com.collage.new_strishakti.data.model.Event.EventDetailResponse
 import com.collage.new_strishakti.data.model.Event.EventResponse
 import com.collage.new_strishakti.data.model.Event.JoinEventResponse
@@ -48,6 +50,7 @@ import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.PUT
 import retrofit2.http.Part
+import retrofit2.http.PartMap
 import retrofit2.http.Query
 
 interface ApiService {
@@ -370,7 +373,32 @@ interface ApiService {
         @Path("eventId") eventId: Int
     ): Response<CommonResponse>
 
+    @GET("ssakti/supadmin/eventcatg/get")
+    suspend fun getEventCategories(
+        @Header("Authorization") token: String
+    ): Response<EventCategoryResponse>
 
+    // response class for create API
+    @Multipart
+    @POST("ssakti/users/event/create/{hostId}/{districtId}")
+    suspend fun createEvent(
+        @Header("Authorization") token: String,
+        @Path("hostId") hostId: Int,
+        @Path("districtId") districtId: Int,
+        @Query("eventCatgId") eventCatgId: Int,
+        @PartMap fields: Map<String, @JvmSuppressWildcards RequestBody>,
+        @Part eventImage: MultipartBody.Part? = null
+    ): Response<CreateEventResponse>
+
+
+
+    @GET("ssakti/users/event/getHostEvents/{hostUserId}")
+    suspend fun getHostEvents(
+        @Header("Authorization") authorization: String?,
+        @Path("hostUserId") hostUserId: Int,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 5
+    ): Response<EventResponse>
 
 }
 

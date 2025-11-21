@@ -1,6 +1,8 @@
 package com.collage.new_strishakti.data.repository
 
+import com.collage.new_strishakti.data.model.Event.CreateEventResponse
 import com.collage.new_strishakti.data.model.Event.DeleteResponse
+import com.collage.new_strishakti.data.model.Event.EventCategory
 import com.collage.new_strishakti.data.model.Event.EventDetailResponse
 import com.collage.new_strishakti.data.model.Event.EventResponse
 import com.collage.new_strishakti.data.model.Event.JoinEventResponse
@@ -8,6 +10,8 @@ import com.collage.new_strishakti.data.model.Event.ParticipantResponse
 import com.collage.new_strishakti.data.model.post.CommonResponse
 import com.collage.new_strishakti.data.model.regi.District
 import com.collage.new_strishakti.data.network.ApiClient
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
@@ -37,7 +41,7 @@ class EventRepository {
         userId: Int,
         districtId: Int,
         page: Int = 0,
-        size: Int = 5,
+        size: Int = 115,
         token: String? = null
     ): Response<EventResponse> {
         // If you store token without "Bearer ", build it here or pass already formatted
@@ -88,6 +92,59 @@ class EventRepository {
         } catch (e: Exception) {
             Pair(false, e.localizedMessage ?: "Unknown error")
         }
+    }
+
+    suspend fun fetchEventCategories(authHeader: String): Result<List<EventCategory>> {
+        return try {
+            val resp = api.getEventCategories(authHeader)
+            if (resp.isSuccessful) {
+                val body = resp.body()
+                Result.success(body?.eventCatgDetails ?: emptyList())
+            } else {
+                Result.failure(Exception("Server error: ${resp.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // CREATE MULTIPART EVENT
+    suspend fun createEventMultipart(
+        authHeader: String,
+        hostUserId: Int,
+        districtId: Int,
+        eventCatgId: Int,
+        parts: Map<String, RequestBody>,
+        imagePart: MultipartBody.Part?
+    ): Result<CreateEventResponse> {
+        return try {
+            val resp = api.createEvent(
+                authHeader,
+                hostUserId,
+                districtId,
+                eventCatgId,
+                parts,
+                imagePart
+            )
+            if (resp.isSuccessful) {
+                resp.body()?.let { Result.success(it) } ?: Result.failure(Exception("Empty response"))
+            } else {
+                val msg = resp.errorBody()?.string() ?: "Server: ${resp.code()}"
+                Result.failure(Exception(msg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getHostEvents(
+        hostUserId: Int,
+        page: Int = 0,
+        size: Int = 5,
+        token: String? = null
+    ): Response<EventResponse> {
+        val authHeader = token?.let { if (it.startsWith("Bearer ")) it else "Bearer $it" }
+        return api.getHostEvents(authHeader, hostUserId, page, size)
     }
 
 

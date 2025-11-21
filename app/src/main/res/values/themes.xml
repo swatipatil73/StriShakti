@@ -47,5 +47,14 @@
         <item name="android:padding">12dp</item>
     </style>
 
+    <style name="ModernDateTimePicker">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:background">@drawable/spinner_modern</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:focusable">false</item>
+        <item name="android:clickable">true</item>
+        <item name="android:hint">Select</item>
+    </style>
 
 </resources>

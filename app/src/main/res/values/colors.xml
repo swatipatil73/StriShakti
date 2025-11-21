@@ -32,6 +32,38 @@
 
     <color name="gray_light">#F5F5F5</color>
     <color name="text_dark">#212121</color>
+
+
+    <!-- 🌟 Primary Brand Color (Your Social Blue) -->
+
+    <color name="socialBlueDark">#1D4ED8</color> <!-- Darker version -->
+    <color name="socialBlueLight">#3B82F6</color>
+
+    <!-- 🌟 Material 3 Semantic Colors -->
+    <color name="md_theme_primary">#2563EB</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#DCE7FF</color>
+    <color name="md_theme_onPrimaryContainer">#00174C</color>
+
+    <color name="md_theme_secondary">#64748B</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#E2E8F0</color>
+    <color name="md_theme_onSecondaryContainer">#1E293B</color>
+
+    <!-- 🌟 Background / Surface -->
+    <color name="md_theme_background">#F8FAFC</color>
+    <color name="md_theme_onBackground">#0F172A</color>
+
+    <color name="md_theme_surface">#FFFFFF</color>
+    <color name="md_theme_onSurface">#1E293B</color>
+
+    <!-- 🌟 Outline / Divider -->
+    <color name="md_theme_outline">#94A3B8</color>
+    <color name="md_theme_outlineVariant">#CBD5E1</color>
+
+    <!-- 🌟 Error -->
+    <color name="md_theme_error">#DC2626</color>
+    <color name="md_theme_onError">#FFFFFF</color>
 </resources>
 <!--    Buttons / Highlights → use @color/logo_pink or @color/logo_orange-->
 

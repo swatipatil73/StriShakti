@@ -17,4 +17,8 @@ data class Participant(
     val userEmail: String?,
     val userCreatedAt: String?,
     val uuid: String?
-)
+) {
+    val fullName: String
+        get() = listOfNotNull(userFirstName, userLastName).joinToString(" ")
+}
+

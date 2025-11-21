@@ -4,13 +4,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.collage.new_strishakti.data.model.Event.CreateEventResponse
 import com.collage.new_strishakti.data.model.Event.Event
+import com.collage.new_strishakti.data.model.Event.EventCategory
 import com.collage.new_strishakti.data.model.Event.EventDetailResponse
 import com.collage.new_strishakti.data.model.Event.EventResponse
 import com.collage.new_strishakti.data.model.Event.Participant
 import com.collage.new_strishakti.data.model.regi.District
 import com.collage.new_strishakti.data.repository.EventRepository
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import java.io.IOException
 
@@ -18,6 +22,15 @@ import java.io.IOException
 class EventViewModel(
     private val repository: EventRepository
 ) : ViewModel() {
+    private var currentHostId: Int? = null
+    private val _categories = MutableLiveData<List<EventCategory>>()
+    val categories: LiveData<List<EventCategory>> = _categories
+
+    private val _createResult = MutableLiveData<Result<CreateEventResponse>?>()
+    val createResult: LiveData<Result<CreateEventResponse>?> = _createResult
+
+    private val _loadingCategories = MutableLiveData<Boolean>(false)
+    val loadingCategories: LiveData<Boolean> = _loadingCategories
 
     private val _deleteLoading = MutableLiveData<Boolean>(false)
     val deleteLoading: LiveData<Boolean> = _deleteLoading
@@ -30,7 +43,7 @@ class EventViewModel(
 
     private val _events = MutableLiveData<List<Event>>(emptyList())
     val events: LiveData<List<Event>> = _events
-
+    private var currentQueryHostId: Int? = null
     private val _loading = MutableLiveData<Boolean>(false)
     val loading: LiveData<Boolean> = _loading
 
@@ -65,6 +78,8 @@ class EventViewModel(
     // Pair(success, message)
     private val _exitResult = MutableLiveData<Pair<Boolean, String?>>()
     val exitResult = _exitResult
+
+
     // paging state
     private var currentPage = 0
     private var currentSize = 5
@@ -89,6 +104,40 @@ class EventViewModel(
                 _loading.value = false
             }
         }
+    }
+
+    fun loadCategories(token: String?) {
+        val auth = token ?: return
+        viewModelScope.launch {
+            _loadingCategories.value = true
+            val res = repository.fetchEventCategories(auth)
+            _loadingCategories.value = false
+            if (res.isSuccess) {
+                _categories.value = res.getOrDefault(emptyList())
+            } else {
+                // You may want to expose error LiveData too
+                _categories.value = emptyList()
+            }
+        }
+    }
+
+    fun createEvent(
+        token: String,
+        hostUserId: Int,
+        districtId: Int,
+        eventCatgId: Int,
+        fields: Map<String, RequestBody>,
+        imagePart: MultipartBody.Part?
+    ) {
+        viewModelScope.launch {
+            _createResult.value = Result.failure(Exception("loading"))
+            val res = repository.createEventMultipart(token, hostUserId, districtId, eventCatgId, fields, imagePart)
+            _createResult.value = res
+        }
+    }
+
+    fun clearCreateResult() {
+        _createResult.value = null
     }
 
     fun loadEvents(userId: Int, districtId: Int, page: Int = 0, size: Int = 5, token: String? = null) {
@@ -119,37 +168,37 @@ class EventViewModel(
         }
     }
 
-    fun loadNextPage() {
-        if (_loadingMore.value == true) return
-        if (_hasNextPage.value != true) return
-
-        _loadingMore.value = true
-        _error.value = null
-        val nextPage = currentPage + 1
-
-        viewModelScope.launch {
-            try {
-                val resp = repository.getEvents(lastUserId, lastDistrictId, nextPage, currentSize, lastToken)
-                if (resp.isSuccessful) {
-                    val body = resp.body()
-                    val newItems = body?.allEventDetails ?: emptyList()
-                    val current = _events.value ?: emptyList()
-                    val merged = ArrayList<Event>(current.size + newItems.size)
-                    merged.addAll(current)
-                    merged.addAll(newItems)
-                    _events.value = merged
-                    currentPage = body?.currentPage ?: nextPage
-                    _hasNextPage.value = body?.hasNextPage ?: false
-                } else {
-                    _error.value = parseError(resp)
-                }
-            } catch (t: Throwable) {
-                _error.value = if (t is IOException) "Network error: ${t.message}" else "Unexpected error: ${t.message}"
-            } finally {
-                _loadingMore.value = false
-            }
-        }
-    }
+//    fun loadNextPage() {
+//        if (_loadingMore.value == true) return
+//        if (_hasNextPage.value != true) return
+//
+//        _loadingMore.value = true
+//        _error.value = null
+//        val nextPage = currentPage + 1
+//
+//        viewModelScope.launch {
+//            try {
+//                val resp = repository.getEvents(lastUserId, lastDistrictId, nextPage, currentSize, lastToken)
+//                if (resp.isSuccessful) {
+//                    val body = resp.body()
+//                    val newItems = body?.allEventDetails ?: emptyList()
+//                    val current = _events.value ?: emptyList()
+//                    val merged = ArrayList<Event>(current.size + newItems.size)
+//                    merged.addAll(current)
+//                    merged.addAll(newItems)
+//                    _events.value = merged
+//                    currentPage = body?.currentPage ?: nextPage
+//                    _hasNextPage.value = body?.hasNextPage ?: false
+//                } else {
+//                    _error.value = parseError(resp)
+//                }
+//            } catch (t: Throwable) {
+//                _error.value = if (t is IOException) "Network error: ${t.message}" else "Unexpected error: ${t.message}"
+//            } finally {
+//                _loadingMore.value = false
+//            }
+//        }
+//    }
 
     fun deleteEvent(hostUserId: Int, eventId: Int, token: String?) {
         _deleteLoading.value = true
@@ -271,10 +320,92 @@ class EventViewModel(
         }
     }
 
-    fun removeParticipantLocally(userId: Int) {
-        val current = _participants.value?.toMutableList() ?: return
-        val removed = current.removeAll { it.userId == userId }
-        if (removed) _participants.value = current
+    // NEW: load host-created events (shows only events where hostUserId == host)
+    fun loadHostEvents(hostUserId: Int, page: Int = 0, size: Int = 5, token: String? = null) {
+        _loading.value = true
+        _error.value = null
+
+        currentPage = page
+        currentSize = size
+        currentHostId = hostUserId
+        lastToken = token
+
+        viewModelScope.launch {
+            try {
+                val resp: Response<EventResponse> = repository.getHostEvents(hostUserId, page, size, token)
+                if (resp.isSuccessful) {
+                    val body = resp.body()
+                    _events.value = body?.allEventDetails ?: emptyList()
+                    _hasNextPage.value = body?.hasNextPage ?: false
+                } else {
+                    _error.value = parseError(resp)
+                }
+            } catch (t: Throwable) {
+                _error.value = if (t is IOException) "Network error: ${t.message}" else "Unexpected error: ${t.message}"
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    // Update loadNextPage to handle both normal and host modes
+    fun loadNextPage() {
+        if (_loadingMore.value == true) return
+        if (_hasNextPage.value != true) return
+
+        _loadingMore.value = true
+        _error.value = null
+        val nextPage = currentPage + 1
+
+        viewModelScope.launch {
+            try {
+                if (currentHostId != null) {
+                    // host-events pagination
+                    val resp = repository.getHostEvents(currentHostId!!, nextPage, currentSize, lastToken)
+                    if (resp.isSuccessful) {
+                        val body = resp.body()
+                        val newItems = body?.allEventDetails ?: emptyList()
+                        val current = _events.value ?: emptyList()
+                        val merged = ArrayList<Event>(current.size + newItems.size)
+                        merged.addAll(current)
+                        merged.addAll(newItems)
+                        _events.value = merged
+                        currentPage = body?.currentPage ?: nextPage
+                        _hasNextPage.value = body?.hasNextPage ?: false
+                    } else {
+                        _error.value = parseError(resp)
+                    }
+                } else {
+                    // normal events pagination (existing behaviour)
+                    val resp = repository.getEvents(lastUserId, lastDistrictId, nextPage, currentSize, lastToken)
+                    if (resp.isSuccessful) {
+                        val body = resp.body()
+                        val newItems = body?.allEventDetails ?: emptyList()
+                        val current = _events.value ?: emptyList()
+                        val merged = ArrayList<Event>(current.size + newItems.size)
+                        merged.addAll(current)
+                        merged.addAll(newItems)
+                        _events.value = merged
+                        currentPage = body?.currentPage ?: nextPage
+                        _hasNextPage.value = body?.hasNextPage ?: false
+                    } else {
+                        _error.value = parseError(resp)
+                    }
+                }
+            } catch (t: Throwable) {
+                _error.value = if (t is IOException) "Network error: ${t.message}" else "Unexpected error: ${t.message}"
+            } finally {
+                _loadingMore.value = false
+            }
+        }
+    }
+
+    // Optional helper
+    fun isShowingHostEvents(): Boolean = currentHostId != null
+
+    // Optional: call this to go back to normal mode and clear host filter
+    fun clearHostMode() {
+        currentHostId = null
     }
 
     private fun <T> parseError(response: Response<T>): String {

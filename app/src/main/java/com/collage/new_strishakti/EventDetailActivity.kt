@@ -1,11 +1,10 @@
 package com.collage.new_strishakti
-import android.content.Intent
+
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,20 +14,16 @@ import com.collage.new_strishakti.Adapter.ParticipantsAdapter
 import com.collage.new_strishakti.Common.SessionManager
 import com.collage.new_strishakti.Common.ViewUtils
 import com.collage.new_strishakti.Factory.EventViewModelFactory
-import com.collage.new_strishakti.data.model.Event.EventAbout
 import com.collage.new_strishakti.data.model.Event.EventDetailResponse
 import com.collage.new_strishakti.data.repository.EventRepository
 import com.collage.new_strishakti.ui.RegisterViewModel.EventViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
-
 
 class EventDetailActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_EVENT_ID = "extra_event_id"
         const val EXTRA_EVENT_USERID = "extra_event_userid"
-
-
         const val EXTRA_EVENT_UUID = "extra_event_uuid"
         const val EXTRA_EVENT_NAME = "extra_event_name"
         const val EXTRA_EVENT_IMAGE = "extra_event_image"
@@ -59,7 +54,32 @@ class EventDetailActivity : AppCompatActivity() {
     private var hostUserId = -1
     private var currentUserId = -1
     private var token = ""
+
     private var participantsDialog: BottomSheetDialog? = null
+
+    // Confirmation dialog helper
+    private fun showConfirmationDialog(
+        title: String,
+        message: String,
+        positiveText: String = "Yes",
+        negativeText: String = "No",
+        onConfirm: () -> Unit
+    ) {
+        if (isFinishing) return
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(positiveText) { dialog, _ ->
+                dialog.dismiss()
+                onConfirm()
+            }
+            .setNegativeButton(negativeText) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_event_detail)
@@ -90,7 +110,6 @@ class EventDetailActivity : AppCompatActivity() {
         token = "Bearer " + SessionManager(this).getToken()
     }
 
-
     private fun setupRecycler() {
         discussAdapter = DiscussionAdapter()
         rvDiscussion.layoutManager = LinearLayoutManager(this)
@@ -114,31 +133,40 @@ class EventDetailActivity : AppCompatActivity() {
             btnAction.isEnabled = !loading
         }
 
-        // Join event result
+        // Join event result (shows dialog on success)
         viewModel.joinResult.observe(this) { result ->
             result?.let {
                 val (success, msg) = it
-                Toast.makeText(this, msg ?: "", Toast.LENGTH_SHORT).show()
                 if (success) {
+                    AlertDialog.Builder(this)
+                        .setTitle("Success")
+                        .setMessage(msg ?: "Operation successful")
+                        .setPositiveButton("OK") { d, _ -> d.dismiss() }
+                        .show()
                     btnAction.text = "Joined"
                     btnAction.isEnabled = false
-                    // Update local EventAbout to reflect joined
                     viewModel.details.value?.about?.firstOrNull()?.isParticipant = true
+                } else {
+                    Toast.makeText(this, msg ?: "Something went wrong", Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
-        // Participant list observer (bottom sheet)
+        // participants list observer (update adapter + empty state)
         viewModel.participants.observe(this) { list ->
             if (::participantsAdapter.isInitialized) {
-                participantsAdapter.submitList(list)
+                participantsAdapter.submitList(list ?: emptyList())
+            }
+            if (::bottomSheetView.isInitialized) {
+                val isEmpty = (list == null || list.isEmpty())
+                ViewUtils.showEmptyState(bottomSheetView, isEmpty, "No participants available yet")
             }
         }
 
-        // participant empty state
+        // participant empty state observer (optional boolean from ViewModel)
         viewModel.participantsEmpty.observe(this) { empty ->
             if (::bottomSheetView.isInitialized) {
-                ViewUtils.showEmptyState(bottomSheetView, empty, "No participants yet")
+                ViewUtils.showEmptyState(bottomSheetView, empty, "No participants available yet")
             }
         }
 
@@ -147,17 +175,21 @@ class EventDetailActivity : AppCompatActivity() {
             if (::progressBarParticipants.isInitialized) {
                 progressBarParticipants.visibility = if (loading) View.VISIBLE else View.GONE
             }
+            if (::bottomSheetView.isInitialized) {
+                // hide empty while loading
+                if (loading) ViewUtils.showEmptyState(bottomSheetView, visible = false)
+            }
         }
+
         // Observe exit loading (show/hide bottom sheet progress)
         viewModel.exitLoading.observe(this) { loading ->
             if (::progressBarParticipants.isInitialized) {
                 progressBarParticipants.visibility = if (loading) View.VISIBLE else View.GONE
             }
-            // optionally disable adapter clicks while loading
             rvDiscussion.isEnabled = !loading
         }
 
-// Observe exit result
+        // Observe exit result
         viewModel.exitResult.observe(this) { pair ->
             pair?.let { (success, msg) ->
                 Toast.makeText(this, msg ?: "", Toast.LENGTH_SHORT).show()
@@ -186,10 +218,9 @@ class EventDetailActivity : AppCompatActivity() {
         }
     }
 
-
     private fun applyDetails(resp: EventDetailResponse) {
         val about = resp.about.firstOrNull() ?: return
-        val dics = resp.discussion.firstOrNull() ?: return
+        // val dics = resp.discussion.firstOrNull() ?: return  // you don't need single discussion here
 
         // Update class-level variables
         eventId = about.eventId ?: eventId
@@ -205,10 +236,6 @@ class EventDetailActivity : AppCompatActivity() {
             isParticipant -> "Exit"         // allow participant to exit
             else -> "Join"
         }
-        // button enabled when:
-        // - host (to view participants)
-        // - user not participant (to join)
-        // - participant (to exit) -> enabled
         btnAction.isEnabled = true
 
         // Discussion list (unchanged)
@@ -232,18 +259,31 @@ class EventDetailActivity : AppCompatActivity() {
                     showParticipantsBottomSheet()
                 }
                 isParticipant -> {
-                    // Current user is a participant → Exit event
-                    // eventId and token already available
-                    viewModel.exitEvent(currentUserId, eventId, token, isHost = false)
+                    // Current user is a participant → confirm before exiting
+                    showConfirmationDialog(
+                        title = "Leave event?",
+                        message = "Are you sure you want to leave this event?",
+                        positiveText = "Leave",
+                        negativeText = "Cancel"
+                    ) {
+                        // confirmed -> call exit
+                        viewModel.exitEvent(currentUserId, eventId, token, isHost = false)
+                    }
                 }
                 else -> {
-                    // Not participant → Join
-                    viewModel.joinEvent(eventId, token)
+                    // Not participant → confirm before joining
+                    showConfirmationDialog(
+                        title = "Join event?",
+                        message = "Do you want to join this event?",
+                        positiveText = "Join",
+                        negativeText = "Cancel"
+                    ) {
+                        viewModel.joinEvent(eventId, token)
+                    }
                 }
             }
         }
     }
-
 
     private fun showParticipantsBottomSheet() {
         participantsDialog = BottomSheetDialog(this)
@@ -253,14 +293,25 @@ class EventDetailActivity : AppCompatActivity() {
         val rv = bottomSheetView.findViewById<RecyclerView>(R.id.rvParticipants)
         progressBarParticipants = bottomSheetView.findViewById(R.id.progressParticipants)
 
-        // adapter with callback
+        // initialize empty state hidden while we start loading
+        ViewUtils.showEmptyState(bottomSheetView, visible = false, message = "No participants available yet")
+
+        // adapter with callback: show confirmation before host deletes a participant
         participantsAdapter = ParticipantsAdapter(
             hostUserId = hostUserId,
             currentUserId = currentUserId
         ) { participant ->
-            // This callback is when host taps delete on a participant.
-            // Call viewModel.exitEvent(participant.userId, eventId, token, isHost = true)
-            viewModel.exitEvent(participant.userId, eventId, token, isHost = true)
+            val participantName = "${participant.userFirstName ?: ""} ${participant.userLastName ?: ""}".trim()
+            // When host taps delete on a participant -> ask confirmation first
+            showConfirmationDialog(
+                title = "Remove participant?",
+                message = "Are you sure you want to remove ${if (participantName.isNotEmpty()) participantName else "this participant"}?",
+                positiveText = "Remove",
+                negativeText = "Cancel"
+            ) {
+                // confirmed -> call ViewModel to remove that participant
+                viewModel.exitEvent(participant.userId, eventId, token, isHost = true)
+            }
         }
 
         rv.layoutManager = LinearLayoutManager(this)

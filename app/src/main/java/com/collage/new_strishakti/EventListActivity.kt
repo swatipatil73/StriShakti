@@ -1,5 +1,7 @@
 package com.collage.new_strishakti
 
+import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -7,7 +9,6 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -15,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.collage.new_strishakti.Adapter.EventAdapter
+import com.collage.new_strishakti.Common.BaseActivity
 import com.collage.new_strishakti.Common.SessionManager
 import com.collage.new_strishakti.Factory.EventViewModelFactory
 import com.collage.new_strishakti.data.model.Event.Event
@@ -23,7 +25,7 @@ import com.collage.new_strishakti.data.repository.EventRepository
 import com.collage.new_strishakti.databinding.ActivityEventListBinding
 import com.collage.new_strishakti.ui.RegisterViewModel.EventViewModel
 
-class EventListActivity : AppCompatActivity() {
+class EventListActivity : BaseActivity() {
 
     private lateinit var binding: ActivityEventListBinding
     private lateinit var viewModel: EventViewModel
@@ -48,6 +50,9 @@ class EventListActivity : AppCompatActivity() {
     // holds eventId we're currently deleting (so we can remove on success)
     private var pendingDeleteEventId: Int? = null
 
+    // mode flag
+    private var isShowingOwnEvents = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -61,6 +66,13 @@ class EventListActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        setupToolbar(
+            title = "Events",
+            showSearch = true,
+            showCreate = true,
+            createIconRes = R.drawable.baseline_add_circle_outline_24
+        )
 
         // session
         session = SessionManager(this)
@@ -77,7 +89,39 @@ class EventListActivity : AppCompatActivity() {
         viewModel.loadDistricts(defaultStateId)
     }
 
+    override fun onSearchClicked() {
+        // toggle between all events and own events
+        isShowingOwnEvents = !isShowingOwnEvents
+
+        if (isShowingOwnEvents) {
+            // switch to own events
+            binding.topAppBar.title = "My Events"
+            binding.textInputLayoutSearch.visibility = View.GONE
+            binding.spinnerDistrict.visibility = View.GONE
+
+            // load events where hostUserId == current userId
+            val auth = userToken ?: session.getToken()?.let { if (it.startsWith("Bearer ")) it else "Bearer $it" }
+            viewModel.loadHostEvents(userId, initialPage, pageSize, auth)
+        } else {
+            // switch back to full list
+            binding.topAppBar.title = "Events"
+            binding.textInputLayoutSearch.visibility = View.VISIBLE
+            binding.spinnerDistrict.visibility = View.VISIBLE
+
+            val selected = binding.spinnerDistrict.selectedItem as? District
+            val districtId = selected?.districtId ?: 0
+            viewModel.clearHostMode()
+            viewModel.loadEvents(userId, districtId, initialPage, pageSize, userToken)
+        }
+    }
+
+    override fun onCreateClicked() {
+        val intent = Intent(this, CreateEventActivity::class.java)
+        startActivity(intent)
+    }
+
     private fun setupViewModel() {
+        // Use constructor-injected repo (ApiClient + SessionManager) if you followed earlier suggestions.
         val repo = EventRepository()
         val factory = EventViewModelFactory(repo)
         viewModel = ViewModelProvider(this, factory).get(EventViewModel::class.java)
@@ -148,17 +192,15 @@ class EventListActivity : AppCompatActivity() {
             // ViewModel appends internally; set full list
             adapter.setItems(currentEventList)
 
-            // Apply active search if needed
+            // Apply active search if needed (only when not in own-events mode)
             val q = binding.etSearch.text?.toString() ?: ""
-            if (q.isNotBlank()) updateListForSearch(q)
+            if (!isShowingOwnEvents && q.isNotBlank()) updateListForSearch(q)
 
             binding.tvEmpty.visibility = if (adapter.itemCount == 0) View.VISIBLE else View.GONE
         }
 
         // loading flags
-        viewModel.loading.observe(this) { loading ->
-            binding.tvTitle.alpha = if (loading) 0.6f else 1f
-        }
+        viewModel.loading.observe(this) { /* optional UI */ }
         viewModel.loadingMore.observe(this) { loadingMore ->
             isLoadingMoreLocal = loadingMore
         }
@@ -172,15 +214,11 @@ class EventListActivity : AppCompatActivity() {
                     // Remove the item using adapter.removeItemById() for smooth UX
                     val idToRemove = pendingDeleteEventId
                     if (idToRemove != null) {
-                        // update adapter (will call notifyItemRemoved internally)
                         adapter.removeItemById(idToRemove)
-
-                        // keep currentEventList consistent with adapter state
                         currentEventList = currentEventList.filterNot { it.eventId == idToRemove }
-
                         pendingDeleteEventId = null
                     } else {
-                        // fallback: reload list from server if we don't know which item was deleted
+                        // fallback: reload list
                         val selected = binding.spinnerDistrict.selectedItem as? District
                         val districtId = selected?.districtId ?: 0
                         viewModel.loadEvents(userId, districtId, initialPage, pageSize, userToken)
@@ -191,7 +229,6 @@ class EventListActivity : AppCompatActivity() {
                 }
             }
         }
-
 
         viewModel.error.observe(this) { err ->
             err?.let {
@@ -226,7 +263,9 @@ class EventListActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val d = parent?.getItemAtPosition(position) as? District
                 val district = d?.districtId ?: 0
-                viewModel.loadEvents(userId, district, initialPage, pageSize, userToken)
+                if (!isShowingOwnEvents) {
+                    viewModel.loadEvents(userId, district, initialPage, pageSize, userToken)
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -271,10 +310,32 @@ class EventListActivity : AppCompatActivity() {
         if (updatedUserId != userId || updatedToken != userToken) {
             userId = updatedUserId
             userToken = if (updatedToken.isNullOrBlank()) null else updatedToken
-            // reload current district data
+            // reload current data depending on mode
+            if (isShowingOwnEvents) {
+                val auth = userToken ?: session.getToken()?.let { if (it.startsWith("Bearer ")) it else "Bearer $it" }
+                viewModel.loadHostEvents(userId, initialPage, pageSize, auth)
+            } else {
+                val selected = binding.spinnerDistrict.selectedItem as? District
+                val districtId = selected?.districtId ?: 0
+                viewModel.loadEvents(userId, districtId, initialPage, pageSize, userToken)
+            }
+        }
+    }
+
+    override fun onBackPressed() {
+        if (isShowingOwnEvents) {
+            // revert to main events
+            isShowingOwnEvents = false
+            binding.topAppBar.title = "Events"
+            binding.textInputLayoutSearch.visibility = View.VISIBLE
+            binding.spinnerDistrict.visibility = View.VISIBLE
+
+            viewModel.clearHostMode()
             val selected = binding.spinnerDistrict.selectedItem as? District
             val districtId = selected?.districtId ?: 0
             viewModel.loadEvents(userId, districtId, initialPage, pageSize, userToken)
+            return
         }
+        super.onBackPressed()
     }
 }
