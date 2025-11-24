@@ -108,6 +108,6 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     // Ads (pick ONE)
-    implementation("com.google.android.gms:play-services-ads:23.+")
+   // implementation("com.google.android.gms:play-services-ads:23.+")
     // implementation("com.google.android.gms:play-services-ads-lite:23.+")
 }

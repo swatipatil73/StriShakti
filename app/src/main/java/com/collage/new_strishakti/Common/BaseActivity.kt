@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import com.collage.new_strishakti.BookmarkActivity
 import com.collage.new_strishakti.EventListActivity
 import com.collage.new_strishakti.FriendListActivity
 import com.collage.new_strishakti.LoginActivity
@@ -67,6 +68,10 @@ abstract class BaseActivity : AppCompatActivity() {
                     val intent = Intent(this, EventListActivity::class.java)
                     startActivity(intent)
                 }
+                R.id.bookmark -> {
+                val intent = Intent(this, BookmarkActivity::class.java)
+                startActivity(intent)
+            }
                 R.id.delete -> {
                     AlertDialog.Builder(this)
                         .setTitle("Delete Account")

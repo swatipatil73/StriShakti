@@ -15,6 +15,7 @@ import com.collage.new_strishakti.data.model.FriendListResponse
 import com.collage.new_strishakti.data.model.Profile.UserProfileResponse
 import com.collage.new_strishakti.data.model.Reel.ReelResponse
 import com.collage.new_strishakti.data.model.Reel.ReelUploadResponse
+import com.collage.new_strishakti.data.model.SavedPost.SavedPostResponse
 import com.collage.new_strishakti.data.model.friend.FriendRequestResponse
 import com.collage.new_strishakti.data.model.friend.SearchFriendsResponse
 import com.collage.new_strishakti.data.model.post.AdsResponse
@@ -399,6 +400,26 @@ interface ApiService {
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 5
     ): Response<EventResponse>
+
+
+
+    //bookmar
+    @GET("ssakti/users/savepost/getSavedPost/{userId}")
+    suspend fun getSavedPosts(
+        @Path("userId") userId: Int,
+        @Query("size") size: Int,
+        @Query("page") page: Int,
+        @Header("Authorization") token: String
+    ): Response<SavedPostResponse>
+
+
+
+    @DELETE("ssakti/users/savepost/deletSavedPost/{userId}/{postId}")
+    suspend fun deleteSavedPost(
+        @Path("userId") userId: Long,
+        @Path("postId") postId: Long,
+        @Header("Authorization") token: String
+    ): Response<CommonResponse>
 
 }
 

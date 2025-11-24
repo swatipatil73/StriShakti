@@ -24,10 +24,10 @@
   android:title="Account Delete"
     android:icon="@drawable/baseline_lock_open_24" />
 
-<!--    <item-->
-<!--        android:id="@+id/nav_favorites"-->
-<!--        android:title="Favorites"-->
-<!--        android:icon="@drawable/ic_favorite" />-->
+    <item
+        android:id="@+id/bookmark"
+        android:title="Saved"
+        android:icon="@drawable/baseline_save_24" />
 
 <!--    <item-->
 <!--        android:id="@+id/nav_settings"-->

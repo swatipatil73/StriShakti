@@ -56,5 +56,22 @@
         <item name="android:clickable">true</item>
         <item name="android:hint">Select</item>
     </style>
+    <style name="ThemeOverlay.MaterialComponents.Dialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <!-- Background of the dialog card -->
+        <item name="android:background">@drawable/dialog_background_rounded</item>
+
+        <!-- Remove full–screen behavior -->
+        <item name="android:windowIsFloating">true</item>
+
+        <!-- Dialog margin from screen edges -->
+        <item name="android:padding">16dp</item>
+
+        <!-- Elevation / shadow -->
+        <item name="android:elevation">12dp</item>
+
+        <!-- Animation for popup -->
+        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_exit</item>
+    </style>
 
 </resources>
