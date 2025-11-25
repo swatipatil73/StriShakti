@@ -14,6 +14,7 @@ import com.collage.new_strishakti.BookmarkActivity
 import com.collage.new_strishakti.EventListActivity
 import com.collage.new_strishakti.FriendListActivity
 import com.collage.new_strishakti.LoginActivity
+import com.collage.new_strishakti.PageListActivity
 import com.collage.new_strishakti.R
 import com.collage.new_strishakti.ReelActivity
 import com.collage.new_strishakti.data.model.post.CommonResponse
@@ -23,7 +24,7 @@ import com.google.android.material.navigation.NavigationView
 
 
 abstract class BaseActivity : AppCompatActivity() {
-    private lateinit var sessionManager: SessionManager
+    protected lateinit var baseSessionManager: SessionManager
 
     lateinit var toolbar: MaterialToolbar
     private lateinit var drawerLayout: DrawerLayout
@@ -31,7 +32,7 @@ abstract class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        sessionManager = SessionManager(this)
+        baseSessionManager = SessionManager(this)
 
     }
 
@@ -72,14 +73,19 @@ abstract class BaseActivity : AppCompatActivity() {
                 val intent = Intent(this, BookmarkActivity::class.java)
                 startActivity(intent)
             }
+
+                R.id.page -> {
+                    val intent = Intent(this, PageListActivity::class.java)
+                    startActivity(intent)
+                }
                 R.id.delete -> {
                     AlertDialog.Builder(this)
                         .setTitle("Delete Account")
                         .setMessage("Are you sure you want to permanently delete your account?")
                         .setPositiveButton("Yes") { dialog, _ ->
 
-                            val userId = sessionManager.getUserId().toString()
-                            val token = "Bearer ${sessionManager.getToken()}"
+                            val userId = baseSessionManager.getUserId().toString()
+                            val token = "Bearer ${baseSessionManager.getToken()}"
 
                             // ✅ Call API using ApiClient.apiService
                             val call = ApiClient.apiService.deleteUser(userId, token)
@@ -96,7 +102,7 @@ abstract class BaseActivity : AppCompatActivity() {
                                         ).show()
 
                                         // Clear session
-                                        sessionManager.clear()
+                                        baseSessionManager.clear()
 
                                         // Redirect to LoginActivity
                                         val intent = Intent(this@BaseActivity, LoginActivity::class.java)

@@ -41,7 +41,7 @@ class FriendListActivity : BaseActivity() {
     private lateinit var binding: ActivityFriendListBinding
     private lateinit var emptyBinding: EmptyStateLayoutBinding
     private lateinit var viewModel: FriendListViewModel
-    private lateinit var sessionManager: SessionManager
+   private lateinit var sessionManager: SessionManager
     private lateinit var friendsAdapter: FriendListAdapter
     private lateinit var searchAdapter: SearchUserAdapter
     private lateinit var bottomNavigationView: BottomNavigationView

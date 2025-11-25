@@ -12,6 +12,7 @@ import com.collage.new_strishakti.data.model.Event.EventResponse
 import com.collage.new_strishakti.data.model.Event.JoinEventResponse
 import com.collage.new_strishakti.data.model.Event.ParticipantResponse
 import com.collage.new_strishakti.data.model.FriendListResponse
+import com.collage.new_strishakti.data.model.PageListResponse
 import com.collage.new_strishakti.data.model.Profile.UserProfileResponse
 import com.collage.new_strishakti.data.model.Reel.ReelResponse
 import com.collage.new_strishakti.data.model.Reel.ReelUploadResponse
@@ -420,6 +421,16 @@ interface ApiService {
         @Path("postId") postId: Long,
         @Header("Authorization") token: String
     ): Response<CommonResponse>
+
+    //page
+
+    @GET("ssakti/users/pages/getAllPages/{userId}")
+    suspend fun getAllPages(
+        @Path("userId") userId: Int,
+        @Query("page") page: Int,
+        @Query("size") size: Int,
+        @Header("Authorization") token: String
+    ): Response<PageListResponse>
 
 }
 
