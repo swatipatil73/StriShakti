@@ -83,6 +83,15 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:text="0 followers" />
+            <ImageView
+                android:id="@+id/btnDelete"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:padding="4dp"
+                android:src="@drawable/baseline_delete_24"
+
+                android:visibility="gone"/>
+
         </LinearLayout>
 
         <!-- Description -->

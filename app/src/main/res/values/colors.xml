@@ -64,6 +64,10 @@
     <!-- 🌟 Error -->
     <color name="md_theme_error">#DC2626</color>
     <color name="md_theme_onError">#FFFFFF</color>
+
+    <color name="page_follow_blue">#2196F3</color>    <!-- FOLLOW: blue -->
+    <color name="page_unfollow_red">#E53935</color>  <!-- UNFOLLOW: red -->
+
 </resources>
 <!--    Buttons / Highlights → use @color/logo_pink or @color/logo_orange-->
 

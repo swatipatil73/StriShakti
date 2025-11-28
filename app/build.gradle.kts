@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    namespace = "com.collage.new_strishakti"
+    namespace = "com.collage.empowermentstrishakti"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.collage.new_strishakti"
+        applicationId = "com.collage.empowermentstrishakti"
         minSdk = 26
         targetSdk = 36
-        versionCode = 19
-        versionName = "5.3"
+        versionCode = 21
+        versionName = "5.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
