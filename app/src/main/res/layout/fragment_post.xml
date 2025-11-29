@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout   xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".PostFragment">
+
+    <!-- Upload Section (visible only for page owner) -->
+    <LinearLayout
+        android:id="@+id/layoutUploadSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:background="@drawable/bg_rounded"
+        android:padding="10dp"
+        android:layout_marginBottom="12dp">
+
+        <!-- Edit text for post content -->
+        <EditText
+            android:id="@+id/etPostContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="What's on your mind?"
+            android:background="@drawable/bg_input"
+            android:padding="10dp"
+            android:minHeight="80dp"
+            android:gravity="top"
+            android:textColor="#000" />
+
+        <!-- Media picker section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="10dp">
+
+            <Button
+                android:id="@+id/btnPickMedia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose File" />
+
+            <TextView
+                android:id="@+id/tvSelectedFile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No file chosen"
+                android:layout_marginStart="10dp"
+                android:textColor="#666" />
+        </LinearLayout>
+
+        <!-- Share button -->
+        <Button
+            android:id="@+id/btnSharePost"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Share"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/socialBlue"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <!-- "No Data Available" -->
+    <TextView
+        android:id="@+id/tvNoData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No posts available"
+        android:gravity="center"
+        android:visibility="gone"
+        android:textColor="#888"
+        android:textSize="16sp"
+        android:layout_marginTop="20dp" />
+
+    <!-- RecyclerView to show post list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerPosts"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingBottom="10dp"
+        android:clipToPadding="false"
+        android:scrollbars="vertical" />
+
+</LinearLayout  >

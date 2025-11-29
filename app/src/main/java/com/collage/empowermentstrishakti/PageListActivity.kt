@@ -3,6 +3,7 @@ package com.collage.empowermentstrishakti
 
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.view.Gravity
@@ -396,9 +397,15 @@ class PageListActivity : BaseActivity(), PagesAdapter.Callback, CreatePageDialog
 
     // Adapter callbacks
     override fun onPageClicked(page: PageDetail) {
-        // TODO: open PageDetailsActivity, pass puuid or parcelable PageDetail
-        Toast.makeText(this, "Open: ${page.pageName}", Toast.LENGTH_SHORT).show()
+        val puuid = page.puuid
+        if (puuid.isNullOrBlank()) {
+            Toast.makeText(this, "Page id missing", Toast.LENGTH_SHORT).show()
+            return
+        }
+        // use the companion start helper
+        PageDetailsActivity.start(this, puuid)
     }
+
 
     override fun onFollowClicked(page: PageDetail, position: Int) {
         if (position < 0) return

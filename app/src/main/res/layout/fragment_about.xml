@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scroll_about"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:id="@+id/ll_about_root"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:elevation="0dp"
+        android:padding="8dp">
+
+        <!-- Page Name -->
+        <TextView
+            android:id="@+id/tvPageName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Page Name"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="8dp" />
+
+        <!-- Page Description -->
+        <TextView
+            android:id="@+id/tvPageDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Page description goes here"
+            android:textSize="16sp"
+            android:textColor="#444"
+            android:layout_marginTop="8dp" />
+
+        <!-- Admin Info row -->
+        <LinearLayout
+            android:id="@+id/llAdmin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/imgAdminProfile"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@drawable/user" />
+
+            <TextView
+                android:id="@+id/tvAdminName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Admin: Someone"
+                android:layout_marginStart="12dp"
+                android:textSize="14sp"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
+
+        <!-- Created At -->
+        <TextView
+            android:id="@+id/tvCreatedAt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Created At: Jan 01, 2024"
+            android:layout_marginTop="8dp"
+            android:textColor="#666"
+            android:textSize="13sp" />
+
+        <!-- UUID (hidden but present) -->
+        <TextView
+            android:id="@+id/tvUUID"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="UUID: xxxxx-xxxx"
+            android:visibility="gone"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginTop="8dp"
+            android:textSize="12sp" />
+
+        <!-- Link (if present) -->
+        <TextView
+            android:id="@+id/tvLink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:autoLink="web"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/socialBlue"
+            android:visibility="gone" />
+
+        <!-- Edit/Delete Buttons (visible only for admin) -->
+        <LinearLayout
+            android:id="@+id/layoutActions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/btnEditPage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit"
+                android:drawableStart="@drawable/baseline_edit_24"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/colorPrimary"
+                android:padding="8dp"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/btnDeletePage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete"
+                android:drawableStart="@drawable/baseline_delete_24"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/instagram_red"
+                android:layout_marginStart="12dp"
+                android:visibility="gone"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

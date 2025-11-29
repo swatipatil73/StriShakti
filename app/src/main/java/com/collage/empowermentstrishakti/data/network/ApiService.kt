@@ -4,6 +4,8 @@ package com.collage.empowermentstrishakti.data.network
 
 import com.collage.empowermentstrishakti.data.model.Comment.CommentModel
 import com.collage.empowermentstrishakti.data.model.Comment.CommentResponse
+import com.collage.empowermentstrishakti.data.model.CreatePagePostRequest
+import com.collage.empowermentstrishakti.data.model.CreatePagePostResponse
 import com.collage.empowermentstrishakti.data.model.Event.CreateEventResponse
 import com.collage.empowermentstrishakti.data.model.Event.DeleteResponse
 import com.collage.empowermentstrishakti.data.model.Event.EventCategoryResponse
@@ -12,6 +14,7 @@ import com.collage.empowermentstrishakti.data.model.Event.EventResponse
 import com.collage.empowermentstrishakti.data.model.Event.JoinEventResponse
 import com.collage.empowermentstrishakti.data.model.Event.ParticipantResponse
 import com.collage.empowermentstrishakti.data.model.FriendListResponse
+import com.collage.empowermentstrishakti.data.model.PageDetailsResponse
 import com.collage.empowermentstrishakti.data.model.PageListResponse
 import com.collage.empowermentstrishakti.data.model.Profile.UserProfileResponse
 import com.collage.empowermentstrishakti.data.model.Reel.ReelResponse
@@ -479,6 +482,39 @@ interface ApiService {
         @Body body: CreatePageRequest,
         @Header("Authorization") token: String
     ): Response<CommonResponse>
+
+
+
+
+
+    @GET("ssakti/users/pages/getPageDetails/{puuid}/{userId}")
+    suspend fun getPageDetails(
+        @Path("puuid") puuid: String,
+        @Path("userId") userId: Int,
+        @Query("page") page: Int,           // <<-- now a query param
+        @Query("size") size: Int,
+        @Header("Authorization") authorization: String // "Bearer <token>"
+    ): Response<PageDetailsResponse>
+
+    // Multipart variant — use only if server supports multipart for this endpoint
+
+
+    @Multipart
+
+    @POST("ssakti/users/pages/addPost/{pageAdminUserId}/{pageId}")
+    suspend fun addPagePostMultipart(
+        @Path("pageAdminUserId") pageAdminUserId: Int,
+        @Path("pageId") pageId: Int,
+        @Part("postName") postName: RequestBody,
+        @Part("postType") postType: RequestBody,
+        @Part("videoThumbnailUrl") videoThumbnailUrl: RequestBody,
+        @Part("hashtag") hashtags: RequestBody?,
+        @Part("mentionId") mentionIds: RequestBody?,
+        @Part postImage: List<MultipartBody.Part>?,
+        @Header("Authorization") authorization: String
+    ): Response<CreatePagePostResponse>
+
+
 
 }
 

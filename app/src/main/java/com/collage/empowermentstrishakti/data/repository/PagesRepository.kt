@@ -1,9 +1,14 @@
 package com.collage.empowermentstrishakti.data.repository
 
+import com.collage.empowermentstrishakti.data.model.CreatePagePostRequest
+import com.collage.empowermentstrishakti.data.model.CreatePagePostResponse
+import com.collage.empowermentstrishakti.data.model.PageDetailsResponse
 import com.collage.empowermentstrishakti.data.model.PageListResponse
 import com.collage.empowermentstrishakti.data.model.SavedPost.CreatePageRequest
 import com.collage.empowermentstrishakti.data.model.post.CommonResponse
 import com.collage.empowermentstrishakti.data.network.ApiService
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 
 class PagesRepository(
@@ -80,6 +85,37 @@ class PagesRepository(
         token: String
     ): Response<CommonResponse> {
         return api.createPage(adminUserId = adminUserId, body = body, token = token)
+    }
+
+    suspend fun getPageDetails(puuid: String, userId: Int, page: Int, size: Int, token: String): Response<PageDetailsResponse> {
+        return api.getPageDetails(puuid = puuid, userId = userId, page = page, size = size, authorization = token)
+    }
+
+
+    suspend fun addPagePostMultipart(
+        pageAdminUserId: Int,
+        pageId: Int,
+        postName: RequestBody,
+        postType: RequestBody,
+        videoThumbnailUrl: RequestBody,
+        hashtags: RequestBody?,
+        mentionIds: RequestBody?,
+        postImage: List<MultipartBody.Part>?,
+        authorization: String
+    ): Response<CreatePagePostResponse> {
+        // ensure token header format: "Bearer <token>" (if your API expects that). Adjust if different.
+        val authHeader = if (authorization.startsWith("Bearer")) authorization else "Bearer $authorization"
+        return api.addPagePostMultipart(
+            pageAdminUserId,
+            pageId,
+            postName,
+            postType,
+            videoThumbnailUrl,
+            hashtags,
+            mentionIds,
+            postImage,
+            authHeader
+        )
     }
 
     suspend fun createPageOrThrow(
