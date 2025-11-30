@@ -40,6 +40,12 @@
         android:title="Notification"
 
         android:icon="@drawable/bell" />
+
+    <item
+        android:id="@+id/allads"
+        android:title="Advertisement"
+
+        android:icon="@drawable/baseline_color_lens_24" />
     <item
         android:id="@+id/delete"
         android:title="Account Delete"

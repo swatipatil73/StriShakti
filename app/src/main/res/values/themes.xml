@@ -47,31 +47,22 @@
         <item name="android:padding">12dp</item>
     </style>
 
-    <style name="ModernDateTimePicker">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">56dp</item>
-        <item name="android:background">@drawable/spinner_modern</item>
-        <item name="android:padding">12dp</item>
-        <item name="android:focusable">false</item>
-        <item name="android:clickable">true</item>
-        <item name="android:hint">Select</item>
-    </style>
-    <style name="ThemeOverlay.MaterialComponents.Dialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <!-- Background of the dialog card -->
-        <item name="android:background">@drawable/dialog_background_rounded</item>
+<!--    <style name="ModernDateTimePicker">-->
+<!--        <item name="android:layout_width">match_parent</item>-->
+<!--        <item name="android:layout_height">56dp</item>-->
+<!--        <item name="android:background">@drawable/spinner_modern</item>-->
+
+<!--        <item name="android:focusable">false</item>-->
+<!--        <item name="android:clickable">true</item>-->
+<!--        <item name="android:hint">Select</item>-->
+<!--    </style>-->
+
 
         <!-- Remove full–screen behavior -->
-        <item name="android:windowIsFloating">true</item>
 
-        <!-- Dialog margin from screen edges -->
-        <item name="android:padding">16dp</item>
 
-        <!-- Elevation / shadow -->
-        <item name="android:elevation">12dp</item>
 
-        <!-- Animation for popup -->
-        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
-        <item name="android:windowExitAnimation">@anim/dialog_exit</item>
-    </style>
+
+
 
 </resources>

@@ -548,6 +548,12 @@ interface ApiService {
         @Path("receiverId") receiverId: Long
     ): Response<MarkReadResponse>
 
+
+    @GET("sskati/users/posts/getAds/ADMIN")
+    suspend fun getAds(
+        @Header("Authorization") authorization: String
+    ): Response<AdsResponse>
+
 }
 
 

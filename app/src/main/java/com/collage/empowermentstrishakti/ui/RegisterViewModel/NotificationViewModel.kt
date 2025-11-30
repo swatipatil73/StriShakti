@@ -12,7 +12,8 @@ class NotificationViewModel(
     private val repository: NotificationRepository
 ) : ViewModel() {
 
-    private val _notifications = MutableLiveData<List<NotificationItem>>()
+    // Initialize with an empty (non-null) list so LiveData never holds null
+    private val _notifications = MutableLiveData<List<NotificationItem>>(emptyList())
     val notifications: LiveData<List<NotificationItem>> = _notifications
 
     private val _isLoading = MutableLiveData<Boolean>(false)
@@ -31,6 +32,7 @@ class NotificationViewModel(
         viewModelScope.launch {
             val result = repository.fetchNotifications(token, userId)
             if (result.isSuccess) {
+                // getOrNull() may return null, so fall back to emptyList()
                 _notifications.value = result.getOrNull() ?: emptyList()
             } else {
                 _error.value = result.exceptionOrNull()?.message ?: "Unknown error"
@@ -47,16 +49,19 @@ class NotificationViewModel(
             result.value = res
 
             if (res.isSuccess) {
-                // update UI locally
+                // if _notifications.value is nullable for any reason, map result can be null —
+                // guard with ?: emptyList() so _notifications.value remains non-null
                 val updated = _notifications.value?.map { item ->
                     item.copy(notificationStatus = "READ")
                 }
-                _notifications.value = updated
+                _notifications.value = updated ?: emptyList()
             }
         }
 
         return result
     }
+
+
 
 
     /** Convenience to refresh current list if needed. */

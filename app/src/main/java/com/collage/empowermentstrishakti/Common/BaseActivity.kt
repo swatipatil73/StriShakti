@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import com.collage.empowermentstrishakti.AllAdsActivity
 import com.collage.empowermentstrishakti.BookmarkActivity
 import com.collage.empowermentstrishakti.EventListActivity
 import com.collage.empowermentstrishakti.FriendListActivity
@@ -83,6 +84,10 @@ abstract class BaseActivity : AppCompatActivity() {
                 }
                 R.id.notification -> {
                     val intent = Intent(this, NotificationActivity::class.java)
+                    startActivity(intent)
+                }
+                R.id.allads -> {
+                    val intent = Intent(this, AllAdsActivity::class.java)
                     startActivity(intent)
                 }
                 R.id.delete -> {

@@ -30,7 +30,7 @@ class FullScreenPopupDialog(
     private var playerView: PlayerView? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(requireContext(), R.style.ThemeOverlay_MaterialComponents_Dialog)
+        val builder = AlertDialog.Builder(requireContext())
         val view = requireActivity().layoutInflater.inflate(R.layout.popup_fullscreen, null)
 
         val ivFullImage = view.findViewById<ImageView>(R.id.ivFullImage)
