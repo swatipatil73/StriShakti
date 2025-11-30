@@ -6,12 +6,14 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.*
 import com.collage.empowermentstrishakti.Common.FileUtil
+import com.collage.empowermentstrishakti.Common.SessionManager
 import com.collage.empowermentstrishakti.data.model.CreatePagePostResponse
 import com.collage.empowermentstrishakti.data.repository.PagesRepository
 import com.collage.empowermentstrishakti.data.model.PageDetailsResponse
 import com.collage.empowermentstrishakti.data.model.PageAbout
 import com.collage.empowermentstrishakti.data.model.PostDetail
 import com.collage.empowermentstrishakti.data.model.Member
+import com.collage.empowermentstrishakti.data.model.post.CommonResponse
 import com.collage.empowermentstrishakti.data.model.post.HomePostData
 import com.collage.empowermentstrishakti.data.model.toPostDetail
 import kotlinx.coroutines.Dispatchers
@@ -26,17 +28,12 @@ import retrofit2.Response
 import java.io.File
 
 
-/**
- * PageDetailViewModel with upload support (multipart).
- *
- * Important:
- * - This implementation expects PagesRepository to expose a method
- *   `suspend fun addPagePostMultipart(...): Response<CreatePagePostResponse>`
- *   and (optionally) a `val context: Context` used by FileUtil.copyUriToTempFile().
- *   If your repository does not expose context, pass a Context into the upload function
- *   or let the repository provide a helper to convert Uri -> File.
- */
-class PageDetailViewModel(private val repo: PagesRepository) : ViewModel() {
+
+
+class PageDetailViewModel(
+    private val repo: PagesRepository,
+    private val sessionManager: SessionManager
+) : ViewModel() {
 
     // full response
     private val _pageDetails = MutableLiveData<PageDetailsResponse?>()
@@ -64,6 +61,10 @@ class PageDetailViewModel(private val repo: PagesRepository) : ViewModel() {
     private val _nextPage = MutableLiveData<Int>(0)
     val nextPage: LiveData<Int> = _nextPage
 
+    // update state LiveData (used by fragment/dialog)
+    private val _updateState = MutableLiveData<UpdateResult>()
+    val updateState: LiveData<UpdateResult> = _updateState
+
     // ---------- upload state (new) ----------
     sealed class UploadState {
         object Idle : UploadState()
@@ -75,12 +76,92 @@ class PageDetailViewModel(private val repo: PagesRepository) : ViewModel() {
     private val _uploadState = MutableLiveData<UploadState>(UploadState.Idle)
     val uploadState: LiveData<UploadState> = _uploadState
 
+    // ---------- update state sealed class ----------
+    sealed class UpdateResult {
+        object Loading : UpdateResult()
+        data class Success(val response: CommonResponse?) : UpdateResult()
+        data class Error(val message: String) : UpdateResult()
+    }
+
+    // ---------- local updates ----------
+    /**
+     * Update pageAbout locally and keep combined pageDetails consistent.
+     * Use this for optimistic UI and call server API separately.
+     */
+    fun updatePageAboutLocally(updated: PageAbout) {
+        _pageAbout.value = updated
+
+        // update the full response if present
+        val cur = _pageDetails.value
+        _pageDetails.value = if (cur != null) {
+            cur.copy(pageAbout = updated)
+        } else {
+            PageDetailsResponse(
+                currentPageMembers = emptyList(),
+                hasNextPage = false,
+                totalPages = 1,
+                pageSize = 0,
+                nextPageNo = 0,
+                currentPage = 0,
+                pageAbout = updated,
+                postDetails = emptyList(),
+                totalElements = 0
+            )
+        }
+    }
+
+    // ---------- network update (single correct implementation) ----------
+    /**
+     * Call repository to update page on server and update LiveData with state/results.
+     */
+    fun updatePageOnServer(updated: PageAbout, coverImagePart: MultipartBody.Part? = null) {
+        val current = _pageAbout.value ?: return
+        val token = sessionManager.getToken() ?: run {
+            _updateState.postValue(UpdateResult.Error("Token missing"))
+            return
+        }
+
+        viewModelScope.launch {
+            _updateState.postValue(UpdateResult.Loading)
+
+            val pageAdminId = current.adminId ?: sessionManager.getUserId()
+            val pageId = current.pagesId ?: run {
+                _updateState.postValue(UpdateResult.Error("Page id missing"))
+                return@launch
+            }
+
+            val jwt =  sessionManager.getToken() ?: ""  // however you store it
+            val raw = sessionManager.getToken() ?: "" // raw token string if you store it separately
+
+            val res = repo.updatePageOnServer(
+                jwtToken = jwt,
+                rawToken = raw,
+                pageAdminUserId = pageAdminId,
+                pageId = pageId,
+                pageName = updated.pageName ?: "",
+                pageDescription = updated.pageDescription,
+                linkUrlName = updated.linkUrlName ?: "",   // if you collect this field
+                linkUrl = updated.linkUrl,
+                coverImagePart = coverImagePart
+            )
+
+            if (res.isSuccess) {
+                val body = res.getOrNull()
+                _pageAbout.postValue(updated)
+                _updateState.postValue(UpdateResult.Success(body))
+            } else {
+                _updateState.postValue(UpdateResult.Error(res.exceptionOrNull()?.message ?: "Unknown error"))
+            }
+        }
+    }
+
+
     // ---------- network load ----------
     fun loadPageDetails(puuid: String, userId: Int, page: Int = 0, size: Int = 20, token: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val resp: Response<PageDetailsResponse> = repo.getPageDetails(puuid = puuid, userId = userId, page = page, size = size, token = token)
+                val resp: Response<PageDetailsResponse> = repo.getPageDetails(puuid = puidOrNullToString(puuid), userId = userId, page = page, size = size, token = token)
                 if (resp.isSuccessful) {
                     val body = resp.body()
                     _pageDetails.value = body
@@ -100,6 +181,9 @@ class PageDetailViewModel(private val repo: PagesRepository) : ViewModel() {
             }
         }
     }
+
+    // helper in case server expects non-empty string or similar; you can remove if not needed
+    private fun puidOrNullToString(puuid: String?): String = puuid ?: ""
 
     // ---------- helpers for testing / optimistic UI ----------
 
@@ -150,32 +234,6 @@ class PageDetailViewModel(private val repo: PagesRepository) : ViewModel() {
         _nextPage.value = 0
     }
 
-    /**
-     * Update pageAbout locally and keep combined pageDetails consistent.
-     * Use this for optimistic UI and call server API separately.
-     */
-    fun updatePageAboutLocally(updated: PageAbout) {
-        _pageAbout.value = updated
-
-        // update the full response if present
-        val cur = _pageDetails.value
-        _pageDetails.value = if (cur != null) {
-            cur.copy(pageAbout = updated)
-        } else {
-            PageDetailsResponse(
-                currentPageMembers = emptyList(),
-                hasNextPage = false,
-                totalPages = 1,
-                pageSize = 0,
-                nextPageNo = 0,
-                currentPage = 0,
-                pageAbout = updated,
-                postDetails = emptyList(),
-                totalElements = 0
-            )
-        }
-    }
-
     /** Remove a follower locally (optimistic). Call server separately. */
     fun removeFollowerLocally(memberId: Int) {
         // update followers LiveData
@@ -216,7 +274,7 @@ class PageDetailViewModel(private val repo: PagesRepository) : ViewModel() {
     /**
      * Uploads a page post (optionally with a file Uri). This method:
      *  - posts Uploading -> Success/Error to uploadState LiveData,
-     *  - replaces optimistic post (matched by optimisticTempUuid) with server result.
+     *  - replaces optimistic post (matched by optimisticLocalId) with server result.
      *
      * @param pageAdminUserId page admin user id (server path param)
      * @param pageId page id (server path param)
@@ -224,13 +282,8 @@ class PageDetailViewModel(private val repo: PagesRepository) : ViewModel() {
      * @param postType "image" | "video" | "file" (string)
      * @param selectedUri optional Uri of chosen file (from picker)
      * @param token auth token (string) — repository may expect "Bearer <token>" or raw token
-     * @param optimisticTempUuid optional temp uuid used to match optimistic item in list
+     * @param optimisticLocalId optional temp id used to match optimistic item in list
      */
-    /**
-     * Updated uploadPagePost: accepts nullable token and optimisticLocalId (Int?)
-     * Callers can pass session.getToken() (nullable) and the temp int id (e.g. Int.MIN_VALUE or optimistic.postId).
-     */
-
     fun uploadPagePost(
         context: Context,
         pageAdminUserId: Int,
@@ -358,3 +411,4 @@ class PageDetailViewModel(private val repo: PagesRepository) : ViewModel() {
         )
     }
 }
+

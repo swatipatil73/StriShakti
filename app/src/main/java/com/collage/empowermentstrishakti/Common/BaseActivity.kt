@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
+import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -40,7 +41,8 @@ abstract class BaseActivity : AppCompatActivity() {
         title: String,
         showSearch: Boolean = false,
         showCreate: Boolean = false,
-        createIconRes: Int = R.drawable.baseline_add_circle_outline_24 // default icon
+        @DrawableRes createIconRes: Int = R.drawable.baseline_add_circle_outline_24,
+        @DrawableRes searchIconRes: Int = R.drawable.search
     ) {
         toolbar = findViewById(R.id.topAppBar)
         drawerLayout = findViewById(R.id.drawer_layout)

@@ -516,6 +516,23 @@ interface ApiService {
 
 
 
+
+
+
+    @Multipart
+    @PUT("ssakti/users/pages/updatePage/{pageAdminUserId}/{pageId}")
+    suspend fun updatePage(
+        @Path("pageAdminUserId") pageAdminUserId: Int,
+        @Path("pageId") pageId: Int,
+        @Header("Authorization") authorization: String,   // Authorization: Bearer <jwt>
+        @Header("token") token: String,                  // token: <raw-token>
+        @Part("pageName") pageName: RequestBody,
+        @Part("pageDescription") pageDescription: RequestBody,
+        @Part("linkUrlName") linkUrlName: RequestBody,
+        @Part("linkUrl") linkUrl: RequestBody,
+        @Part coverImage: MultipartBody.Part? = null
+    ): Response<CommonResponse>
+
 }
 
 

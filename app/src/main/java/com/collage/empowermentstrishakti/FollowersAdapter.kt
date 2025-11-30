@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.collage.empowermentstrishakti.R
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 class FollowersAdapter(
     private val currentUserIsAdmin: Boolean = false,
+
     private val onRemoveClick: ((Member, Int) -> Unit)? = null
 ) : ListAdapter<Member, FollowersAdapter.FollowerVH>(DIFF) {
 
@@ -33,9 +35,9 @@ class FollowersAdapter(
     }
 
     inner class FollowerVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val imgProfile: CircleImageView = itemView.findViewById(R.id.imgFollowerProfile)
-        private val tvName: TextView = itemView.findViewById(R.id.tvFollowerName)
-        private val btnRemove: Button = itemView.findViewById(R.id.btnRemoveFollower)
+        private val imgProfile: ImageView = itemView.findViewById(R.id.ivAvatar)
+        private val tvName: TextView = itemView.findViewById(R.id.tvName)
+       // private val btnRemove: Button = itemView.findViewById(R.id.btnRemoveFollower)
 
         fun bind(member: Member) {
             val fullName = listOfNotNull(member.userFirstName, member.userlastName).joinToString(" ").ifBlank { "User" }
@@ -46,13 +48,13 @@ class FollowersAdapter(
                 .placeholder(R.drawable.user)
                 .into(imgProfile)
 
-            btnRemove.visibility = if (currentUserIsAdmin) View.VISIBLE else View.GONE
-            btnRemove.setOnClickListener { onRemoveClick?.invoke(member, bindingAdapterPosition) }
+         //   btnRemove.visibility = if (currentUserIsAdmin) View.VISIBLE else View.GONE
+           // btnRemove.setOnClickListener { onRemoveClick?.invoke(member, bindingAdapterPosition) }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FollowerVH {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_follower, parent, false)
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_friend, parent, false)
         return FollowerVH(v)
     }
 

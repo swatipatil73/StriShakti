@@ -86,8 +86,16 @@ class PageListActivity : BaseActivity(), PagesAdapter.Callback, CreatePageDialog
         }
         WindowInsetsControllerCompat(window, root).isAppearanceLightNavigationBars = false
 
-        // Toolbar from BaseActivity
-        setupToolbar(title = "Pages", showSearch = true, showCreate = true)
+
+
+        setupToolbar(
+            title = "Pages",
+            showSearch = true,
+            showCreate = true,
+
+            searchIconRes = R.drawable.outline_contact_page_24
+        )
+
 
         // find views AFTER setContentView
         recyclerView = findViewById(R.id.recyclerView)
@@ -395,15 +403,17 @@ class PageListActivity : BaseActivity(), PagesAdapter.Callback, CreatePageDialog
 
 
 
-    // Adapter callbacks
     override fun onPageClicked(page: PageDetail) {
         val puuid = page.puuid
+        val pagename = page.pageName ?: "" // guard null
+
         if (puuid.isNullOrBlank()) {
             Toast.makeText(this, "Page id missing", Toast.LENGTH_SHORT).show()
             return
         }
-        // use the companion start helper
-        PageDetailsActivity.start(this, puuid)
+
+        // pass page name too
+        PageDetailsActivity.start(this, puuid, pagename)
     }
 
 

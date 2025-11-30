@@ -62,25 +62,41 @@
         </LinearLayout>
 
         <!-- Created At -->
-        <TextView
-            android:id="@+id/tvCreatedAt"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Created At: Jan 01, 2024"
-            android:layout_marginTop="8dp"
-            android:textColor="#666"
-            android:textSize="13sp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/baseline_timeline_24"
+
+                android:layout_marginEnd="6dp" />
+
+            <TextView
+                android:id="@+id/tvCreatedLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Created At:"
+                android:textColor="#666"
+                android:textSize="13sp"/>
+
+            <TextView
+                android:id="@+id/tvCreatedAt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="#666"
+                android:textSize="13sp"/>
+        </LinearLayout>
+
+
 
         <!-- UUID (hidden but present) -->
-        <TextView
-            android:id="@+id/tvUUID"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="UUID: xxxxx-xxxx"
-            android:visibility="gone"
-            android:textColor="@android:color/darker_gray"
-            android:layout_marginTop="8dp"
-            android:textSize="12sp" />
+
 
         <!-- Link (if present) -->
         <TextView
@@ -112,16 +128,7 @@
                 android:padding="8dp"
                 android:visibility="gone"/>
 
-            <Button
-                android:id="@+id/btnDeletePage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Delete"
-                android:drawableStart="@drawable/baseline_delete_24"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@color/instagram_red"
-                android:layout_marginStart="12dp"
-                android:visibility="gone"/>
+
         </LinearLayout>
 
     </LinearLayout>
