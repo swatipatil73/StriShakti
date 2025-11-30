@@ -15,6 +15,7 @@ import com.collage.empowermentstrishakti.BookmarkActivity
 import com.collage.empowermentstrishakti.EventListActivity
 import com.collage.empowermentstrishakti.FriendListActivity
 import com.collage.empowermentstrishakti.LoginActivity
+import com.collage.empowermentstrishakti.NotificationActivity
 import com.collage.empowermentstrishakti.PageListActivity
 import com.collage.empowermentstrishakti.R
 import com.collage.empowermentstrishakti.ReelActivity
@@ -78,6 +79,10 @@ abstract class BaseActivity : AppCompatActivity() {
 
                 R.id.page -> {
                     val intent = Intent(this, PageListActivity::class.java)
+                    startActivity(intent)
+                }
+                R.id.notification -> {
+                    val intent = Intent(this, NotificationActivity::class.java)
                     startActivity(intent)
                 }
                 R.id.delete -> {

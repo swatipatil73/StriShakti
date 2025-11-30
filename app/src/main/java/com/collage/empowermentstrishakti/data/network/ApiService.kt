@@ -14,6 +14,8 @@ import com.collage.empowermentstrishakti.data.model.Event.EventResponse
 import com.collage.empowermentstrishakti.data.model.Event.JoinEventResponse
 import com.collage.empowermentstrishakti.data.model.Event.ParticipantResponse
 import com.collage.empowermentstrishakti.data.model.FriendListResponse
+import com.collage.empowermentstrishakti.data.model.Notification.MarkReadResponse
+import com.collage.empowermentstrishakti.data.model.Notification.NotificationResponse
 import com.collage.empowermentstrishakti.data.model.PageDetailsResponse
 import com.collage.empowermentstrishakti.data.model.PageListResponse
 import com.collage.empowermentstrishakti.data.model.Profile.UserProfileResponse
@@ -532,6 +534,19 @@ interface ApiService {
         @Part("linkUrl") linkUrl: RequestBody,
         @Part coverImage: MultipartBody.Part? = null
     ): Response<CommonResponse>
+
+    //notification
+    @GET("ssakti/users/notification/getAllNotification/{userId}")
+    suspend fun getAllNotifications(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Long
+    ): Response<NotificationResponse>
+
+    @POST("ssakti/users/notification/updateNotificationStatus/{receiverId}")
+    suspend fun markAllNotificationsAsRead(
+        @Header("Authorization") token: String,
+        @Path("receiverId") receiverId: Long
+    ): Response<MarkReadResponse>
 
 }
 
