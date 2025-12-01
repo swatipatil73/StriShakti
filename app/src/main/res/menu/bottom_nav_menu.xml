@@ -24,6 +24,12 @@
         android:visible="false"
         android:title="Notifications" />
 
+
+    <item
+        android:id="@+id/profile"
+        android:icon="@drawable/outline_article_person_24"
+        android:title="Profile" />
+
     <item
         android:id="@+id/nav_profile"
         android:icon="@drawable/baseline_lock_open_24"

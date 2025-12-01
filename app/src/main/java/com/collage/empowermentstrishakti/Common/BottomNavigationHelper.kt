@@ -8,6 +8,7 @@ import com.collage.empowermentstrishakti.CreatePostDialogFragment
 import com.collage.empowermentstrishakti.LoginActivity
 import com.collage.empowermentstrishakti.MainActivity
 import com.collage.empowermentstrishakti.R
+import com.collage.empowermentstrishakti.UserProfileActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 object BottomNavigationHelper {
@@ -40,8 +41,8 @@ object BottomNavigationHelper {
                         dialog.show(activity.supportFragmentManager, "CreatePostDialog")
                     }
                 }
-                R.id.nav_notifications -> {
-                   // activity.startActivity(Intent(activity, NotificationsActivity::class.java))
+                R.id.profile -> {
+                    activity.startActivity(Intent(activity, UserProfileActivity::class.java))
                 }
                 R.id.nav_profile -> {
                     AlertDialog.Builder(activity)

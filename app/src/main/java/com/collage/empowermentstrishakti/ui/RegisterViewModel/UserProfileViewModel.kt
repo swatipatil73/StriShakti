@@ -1,5 +1,6 @@
 package com.collage.empowermentstrishakti.ui.RegisterViewModel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -25,15 +26,18 @@ class UserProfileViewModel(
     val userPosts: LiveData<List<Reel>> get() = _userPosts
 
     fun fetchUserProfile(uuid: String) {
+        if (uuid.isBlank()) {
+            _error.value = "Profile UUID is missing"
+            Log.w("UserProfileViewModel", "fetchUserProfile called with blank uuid")
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val response = repository.getUserProfile(uuid)
-                if (response.isSuccessful) {
-                    _userProfile.value = response.body()
-                } else {
-                    _error.value = "Failed to load profile (${response.code()})"
-                }
+                if (response.isSuccessful) _userProfile.value = response.body()
+                else _error.value = "Failed to load profile (${response.code()})"
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -41,6 +45,8 @@ class UserProfileViewModel(
             }
         }
     }
+
+
 
     fun fetchUserPosts() {
         viewModelScope.launch {

@@ -51,32 +51,73 @@ class UserProfileActivity : AppCompatActivity() {
             insets
         }
 
+        // ----------------- Initialize session manager first -----------------
         sessionManager = SessionManager(this)
+        Log.d("UserProfileActivity", "SESSION check -> userId=${sessionManager.getUserId()}, uuid='${sessionManager.getuserUuid()}', tokenExists=${!sessionManager.getToken().isNullOrEmpty()}")
 
-        val uuid = intent.getStringExtra("UUID") ?: ""
-        viewedUserId = intent.getIntExtra("USER_ID", -1)
-        val isOwnProfile = sessionManager.getUserId() == viewedUserId
-        Log.d("UserProfileActivity1", "UUID from intent: $uuid")
-        Log.d("UserProfileActivity1", "ViewedUserId from intent: $viewedUserId")
-        Log.d("UserProfileActivity1", "Logged-in userId: ${sessionManager.getUserId()}")
-        Log.d("UserProfileActivity1", "Is own profile: $isOwnProfile")
+        // ----------------- Initialize ViewModels BEFORE using them -----------------
         setupViewModel()
         setupFriendViewModel()
+        Log.d("UserProfileActivity", "ViewModels initialized: viewModel=${::viewModel.isInitialized}, friendViewModel=${::friendViewModel.isInitialized}")
 
+        // ----------------- Read Intent extras (may be empty) -----------------
+        val intentUuid = intent.getStringExtra("UUID")?.trim().orEmpty()
+        val intentUserId = intent.getIntExtra("USER_ID", -1)
+
+        // ----------------- Session values -----------------
+        val sessionUserId = sessionManager.getUserId()
+        val sessionUuid = sessionManager.getuserUuid() ?: ""
+
+        // Decide which user to display: prefer intent values if present, otherwise session values
+        val targetUserId = if (intentUserId != -1) intentUserId else sessionUserId
+        val targetUuid = if (intentUuid.isNotEmpty()) intentUuid else sessionUuid
+
+        // Ensure viewedUserId used by friend logic is set
+        viewedUserId = targetUserId
+
+        // Is this the logged-in user's profile?
+        val isOwnProfile = (targetUserId == sessionUserId) || (targetUuid.isNotEmpty() && targetUuid == sessionUuid)
+
+        // Debug logs
+        Log.d("UserProfileActivity", "Intent UUID: '$intentUuid', Intent USER_ID: $intentUserId")
+        Log.d("UserProfileActivity", "Session UUID: '$sessionUuid', Session USER_ID: $sessionUserId")
+        Log.d("UserProfileActivity", "Resolved target USER_ID: $targetUserId, target UUID: '$targetUuid'")
+        Log.d("UserProfileActivity", "viewedUserId (set) = $viewedUserId")
+        Log.d("UserProfileActivity", "isOwnProfile = $isOwnProfile")
+
+        // Show/hide edit & other-user buttons
         binding.ivEditProfile.isVisible = isOwnProfile
         binding.otherUserButtonsLayout.isVisible = !isOwnProfile
 
-        setupViewPager(uuid, viewedUserId, isOwnProfile)
+        // Set up ViewPager with resolved values
+        setupViewPager(targetUuid, targetUserId, isOwnProfile)
+
+        // Observers (attach after viewModels are initialized)
         setupObservers()
         setupFriendObservers()
         setupFriendButtons()
 
-        if (uuid.isNotEmpty()) {
-            viewModel.fetchUserProfile(uuid)
+        // ----------------- Guarded single profile fetch -----------------
+        val finalUuid = targetUuid.ifEmpty {
+            Log.w("UserProfileActivity", "targetUuid empty; falling back to sessionUuid='${sessionUuid}'")
+            sessionUuid
         }
 
-        // Fetch friend list to get status of the viewed user
-        friendViewModel.fetchFriendsList(sessionManager.getUserId())
+        if (finalUuid.isNotEmpty()) {
+            Log.d("UserProfileActivity", "Fetching profile for uuid='$finalUuid'")
+            viewModel.fetchUserProfile(finalUuid)
+        } else {
+            Log.w("UserProfileActivity", "No UUID available to fetch profile. targetUserId=$targetUserId")
+            // Optional: if backend supports fetching by numeric id, you can call:
+            // viewModel.fetchUserProfileById(targetUserId)
+        }
+
+        // Fetch friend list for the logged-in user so we can determine relation to viewedUserId
+        if (sessionUserId != -1) {
+            friendViewModel.fetchFriendsList(sessionUserId)
+        } else {
+            Log.w("UserProfileActivity", "sessionUserId is invalid (-1); friend list fetch skipped")
+        }
 
         binding.ivBack.setOnClickListener { finish() }
     }

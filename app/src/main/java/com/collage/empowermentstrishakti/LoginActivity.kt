@@ -8,6 +8,7 @@ import android.text.SpannableString
 import android.text.TextPaint
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -123,20 +124,35 @@ class LoginActivity : BaseActivity() {
             override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                 progressBar.visibility = View.GONE
                 if (response.isSuccessful && response.body() != null) {
-                    val user = response.body()!!
+                    val body = response.body()!!
 
-                    // ✅ Save user info in SharedPreferences
+                    // extract fields from your LoginResponse model
+                    val userId = body.userId
+                    val userFirstName = body.userFirstName ?: ""
+                    val userLastName = body.userLastName ?: ""
+                    val userName = if (userFirstName.isNotBlank()) "$userFirstName $userLastName".trim() else (body.userFirstName ?: "")
+                    val token = body.token ?: ""
+                    val uuid = body.userUUID ?: ""
+
+                    // Save in SharedPreferences (SessionManager)
                     sessionManager.saveUserData(
-                        userId = user.userId,
-                        userName = user.userFirstName,
-                        token = user.token
+                        userId = userId,
+                        userName = userName,
+                        token = token
                     )
+
+                    // Save UUID separately (you added this helper)
+                    sessionManager.saveUserUuid(uuid)
+
+                    Log.d("LOGIN", "Saved -> userId=$userId, uuid=$uuid, tokenExists=${token.isNotEmpty()}")
 
                     // Navigate to main screen
                     startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                     finish()
+                }
 
-                } else {
+
+                else {
                     val errorBody = response.errorBody()?.string()
                     val errorMessage = try {
                         JSONObject(errorBody).getString("message")

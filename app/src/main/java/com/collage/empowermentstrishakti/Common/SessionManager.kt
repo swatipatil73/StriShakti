@@ -6,15 +6,19 @@ class SessionManager(context: Context) {
 
     private val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
     private val editor = sharedPreferences.edit()
-    private lateinit var sessionManager: SessionManager
 
-    // Save user data
+    // Save user data (keeps existing method)
     fun saveUserData(userId: Int, userName: String, token: String) {
         editor.putInt("user_id", userId)
         editor.putString("user_name", userName)
         editor.putString("token", token)
         editor.apply()
+    }
 
+    // Optional: convenience method to save UUID separately (do not conflict with existing callsites)
+    fun saveUserUuid(uuid: String) {
+        editor.putString("user_uuid", uuid)
+        editor.apply()
     }
 
     // Get user data
@@ -29,12 +33,14 @@ class SessionManager(context: Context) {
     fun getToken(): String? {
         return sharedPreferences.getString("token", "")
     }
+
+    // UUID getter — matches the name you used in activity (getuserUuid)
     fun getuserUuid(): String? {
-        return sharedPreferences.getString("userUUID", "")
+        return sharedPreferences.getString("user_uuid", "")
     }
-    // Clear all data (logout)
+
+    // optional helper to clear session (handy)
     fun clear() {
-        editor.clear()
-        editor.apply()
+        editor.clear().apply()
     }
 }
