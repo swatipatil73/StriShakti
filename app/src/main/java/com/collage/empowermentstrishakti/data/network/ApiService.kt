@@ -18,6 +18,7 @@ import com.collage.empowermentstrishakti.data.model.Notification.MarkReadRespons
 import com.collage.empowermentstrishakti.data.model.Notification.NotificationResponse
 import com.collage.empowermentstrishakti.data.model.PageDetailsResponse
 import com.collage.empowermentstrishakti.data.model.PageListResponse
+import com.collage.empowermentstrishakti.data.model.Profile.UpdateUserResponse
 import com.collage.empowermentstrishakti.data.model.Profile.UserProfileResponse
 import com.collage.empowermentstrishakti.data.model.Reel.ReelResponse
 import com.collage.empowermentstrishakti.data.model.Reel.ReelUploadResponse
@@ -553,6 +554,29 @@ interface ApiService {
     suspend fun getAds(
         @Header("Authorization") authorization: String
     ): Response<AdsResponse>
+
+    // prfile
+    @GET("ssakti/users/user/getOrgDetails")
+    suspend fun getOrgDetails(
+        @Header("Authorization") authorization: String
+    ): Response<com.collage.empowermentstrishakti.data.model.Profile.OrgDetailsResponse>
+
+    @Multipart
+    @PUT("ssakti/users/user/updateUser/{id}")
+    suspend fun updateUserMultipart(
+        @Header("Authorization") authorization: String,
+        @Path("id") id: Int,
+        // text parts as RequestBody
+        @Part("userDateOfBirth") userDateOfBirth: RequestBody?,
+        @Part("userAddress") userAddress: RequestBody?,
+        @Part("userFirstName") userFirstName: RequestBody?,
+        @Part("userLastName") userLastName: RequestBody?,
+        @Part("orgId") orgId: RequestBody?,
+        @Part("subRole") subRole: RequestBody?,
+        // file parts (may be null)
+        @Part userProfileImagePath: MultipartBody.Part?,
+        @Part userCoverProfileImagePath: MultipartBody.Part?
+    ): Response<UpdateUserResponse>
 
 }
 

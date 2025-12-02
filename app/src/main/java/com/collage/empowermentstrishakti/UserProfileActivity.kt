@@ -124,7 +124,7 @@ class UserProfileActivity : AppCompatActivity() {
 
     // ---------------- ViewModel setup ----------------
     private fun setupViewModel() {
-        val repo = UserProfileRepository(ApiClient.apiService, sessionManager)
+        val repo = UserProfileRepository(ApiClient.apiService, sessionManager,this)
         val factory = UserProfileViewModelFactory(repo)
         viewModel = ViewModelProvider(this, factory)[UserProfileViewModel::class.java]
     }

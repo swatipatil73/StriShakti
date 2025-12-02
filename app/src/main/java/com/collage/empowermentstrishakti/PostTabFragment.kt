@@ -38,7 +38,12 @@ class PostTabFragment : Fragment() {
 
         // Initialize SessionManager and ViewModel
         sessionManager = SessionManager(requireContext())
-        val repository = UserProfileRepository(ApiClient.apiService, sessionManager)
+        val repository = UserProfileRepository(
+            ApiClient.apiService,
+            sessionManager,
+            requireContext().applicationContext
+        )
+
         val factory = UserProfileViewModelFactory(repository)
         viewModel = ViewModelProvider(requireActivity(), factory)[UserProfileViewModel::class.java]
 

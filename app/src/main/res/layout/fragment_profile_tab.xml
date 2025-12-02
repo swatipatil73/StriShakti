@@ -13,6 +13,17 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Progress (centered horizontally) -->
+        <ProgressBar
+            android:id="@+id/progressProfile"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:indeterminate="true"
+            android:layout_marginBottom="8dp" />
+
         <!-- Cover Image -->
         <ImageView
             android:id="@+id/imageCover"
@@ -116,7 +127,8 @@
 
             <EditText
                 android:id="@+id/etBioEditable"
-                android:layout_width="match_parent"                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:visibility="gone"
                 android:drawableStart="@drawable/baseline_timeline_24"
                 android:drawablePadding="8dp"
@@ -151,7 +163,6 @@
                 android:clickable="true"
                 android:layout_marginBottom="6dp" />
 
-
             <!-- Location -->
             <TextView
                 android:id="@+id/tvLocationDistrict"
@@ -179,12 +190,21 @@
                 android:textSize="15sp"
                 android:layout_marginBottom="6dp" />
 
-            <!-- Hobbies -->
+            <!-- Hobbies / Organization -->
             <TextView
                 android:id="@+id/tvHobbies"
                 android:drawableStart="@drawable/baseline_color_lens_24"
                 android:drawablePadding="8dp"
                 style="@style/ProfileText" />
+
+            <!-- Organization Spinner (visible in edit mode) -->
+            <Spinner
+                android:id="@+id/spinnerOrg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_marginTop="4dp"
+                android:spinnerMode="dropdown" />
 
             <EditText
                 android:id="@+id/etHobbies"
@@ -210,7 +230,6 @@
             android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:fontFamily="sans-serif"
-
             android:background="@drawable/button_background"
             android:layout_marginBottom="16dp" />
     </LinearLayout>
