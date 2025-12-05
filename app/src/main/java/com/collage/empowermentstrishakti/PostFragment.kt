@@ -12,22 +12,28 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.collage.empowermentstrishakti.Adapter.PagePostAdapter
+import com.collage.empowermentstrishakti.Common.InteractionManagerImpl
 import com.collage.empowermentstrishakti.Common.SessionManager
 import com.collage.empowermentstrishakti.R
 import com.collage.empowermentstrishakti.data.model.PostDetail
+import com.collage.empowermentstrishakti.data.model.post.PostActionsVMFactory
+import com.collage.empowermentstrishakti.data.network.ApiClient.apiService
+import com.collage.empowermentstrishakti.data.repository.LikeRepository
+import com.collage.empowermentstrishakti.data.repository.PostActionsRepository
+import com.collage.empowermentstrishakti.data.repository.SavedPostsRepository
 import com.collage.empowermentstrishakti.ui.RegisterViewModel.PageDetailViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import com.collage.empowermentstrishakti.ui.RegisterViewModel.PostActionEvent
+import com.collage.empowermentstrishakti.ui.RegisterViewModel.PostActionsViewModel
+
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 
+
+import kotlinx.coroutines.launch
 
 class PostFragment : Fragment() {
 
@@ -40,15 +46,17 @@ class PostFragment : Fragment() {
     private lateinit var recyclerPosts: RecyclerView
     private lateinit var adapter: PagePostAdapter
     private lateinit var vm: PageDetailViewModel
-    private val session by lazy { SessionManager(requireContext()) }
+    private val session: SessionManager by lazy { SessionManager(requireContext()) }
 
     private var selectedUri: Uri? = null
     private lateinit var pickLauncher: ActivityResultLauncher<String>
-    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     // NOTE: set these based on current page context (pass via fragment args)
     private var pageAdminUserId: Int = -1
     private var pageId: Int = -1
+
+    // interaction manager
+    private lateinit var interactionManager: InteractionManagerImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,8 +70,9 @@ class PostFragment : Fragment() {
 
         pickLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             selectedUri = uri
-            view?.findViewById<TextView>(R.id.tvSelectedFile)?.text =
-                if (uri != null) "File selected" else "No file chosen"
+            if (this::tvSelectedFile.isInitialized) {
+                tvSelectedFile.text = if (uri != null) "File selected" else "No file chosen"
+            }
         }
     }
 
@@ -77,47 +86,55 @@ class PostFragment : Fragment() {
         tvNoData = v.findViewById(R.id.tvNoData)
         recyclerPosts = v.findViewById(R.id.recyclerPosts)
 
-        adapter = PagePostAdapter(
-            onItemClick = { /* open post detail if you want */ },
-            onLikeClick = { post, pos -> onLikeClicked(post, pos) },
-            onCommentClick = { post, pos -> onCommentClicked(post, pos) },
-            onShareClick = { post, pos -> onShareClicked(post, pos) },
-            onMoreClick = { post, pos, view -> onMoreClicked(post, pos, view) }
+        // --- repos & interaction manager ---
+        val api = apiService // your ApiClient.apiService
+        val postActionsRepo = PostActionsRepository(api)
+        val savedRepo = SavedPostsRepository(api)
+        interactionManager = InteractionManagerImpl(
+            likeRepo = LikeRepository,
+            postActionsRepo = postActionsRepo,
+            savedPostsRepo = savedRepo
         )
+
+        // --- obtain PostActionsViewModel via factory (must be done before adapter) ---
+        val postActionsFactory = PostActionsVMFactory(postActionsRepo)
+        val postActionsVm = ViewModelProvider(requireActivity(), postActionsFactory)
+            .get(PostActionsViewModel::class.java)
+
+        // --- create adapter (PASS vm here) BEFORE assigning to RecyclerView ---
+        adapter = PagePostAdapter(
+            scope = viewLifecycleOwner.lifecycleScope,
+            interactionManager = interactionManager,
+            vm = postActionsVm,
+            onItemClick = { /* open post detail if you want */ }
+        )
+
+        // --- RecyclerView setup (now safe) ---
         recyclerPosts.layoutManager = LinearLayoutManager(requireContext())
         recyclerPosts.adapter = adapter
 
-        btnPickMedia.setOnClickListener {
-            pickLauncher.launch("*/*") // accept image or video
-        }
+        // --- pick / share listeners ---
+        btnPickMedia.setOnClickListener { pickLauncher.launch("*/*") }
+        btnSharePost.setOnClickListener { doSharePost() }
 
-        btnSharePost.setOnClickListener {
-            doSharePost()
-        }
-
-        // if pageAdminUserId not provided, fallback to current user
+        // --- fallback for page admin ---
         if (pageAdminUserId == -1) {
-            pageAdminUserId = session.getUserId()
+            pageAdminUserId = session.getUserId() ?: -1
             Log.d("PostFragment", "pageAdminUserId fallback to session: $pageAdminUserId")
         }
 
-        // If pageId not supplied via args, observe pageDetails and set pageId when available
+        // --- pageId observer (fill if unknown) ---
         if (pageId == -1) {
             vm.pageDetails.observe(viewLifecycleOwner) { resp ->
-                val serverPageId = resp?.pageAbout?.pagesId ?: -1   // <-- use pagesId
+                val serverPageId = resp?.pageAbout?.pagesId ?: -1
                 if (serverPageId != -1) {
                     pageId = serverPageId
                     Log.d("PostFragment", "pageId set from server (pagesId): $pageId")
-                } else {
-                    Log.w("PostFragment", "pageId still unknown (will block upload until set)")
                 }
             }
-        } else {
-            Log.d("PostFragment", "pageId from args: $pageId")
         }
 
-
-        // Observe the pageDetails and update UI
+        // --- observe VM lists and update adapter ---
         vm.pageDetails.observe(viewLifecycleOwner) { resp ->
             val adminId = resp?.pageAbout?.adminId ?: -1
             layoutUpload.visibility = if (adminId == session.getUserId()) View.VISIBLE else View.GONE
@@ -132,6 +149,7 @@ class PostFragment : Fragment() {
             tvNoData.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
         }
 
+        // --- upload state handling ---
         vm.uploadState.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is PageDetailViewModel.UploadState.Uploading -> {
@@ -142,15 +160,13 @@ class PostFragment : Fragment() {
                     btnSharePost.isEnabled = true
                     btnSharePost.text = "Share"
                     Toast.makeText(requireContext(), "Post uploaded", Toast.LENGTH_SHORT).show()
+                    // If your UploadState contains optimisticLocalId + createdPost, update accordingly
+                    // (adjust fields to your actual UploadState implementation)
                 }
                 is PageDetailViewModel.UploadState.Error -> {
                     btnSharePost.isEnabled = true
                     btnSharePost.text = "Share"
-                    // friendly message
-                    Toast.makeText(requireContext(),
-                        "Upload failed. Unable to access the file for the upload.",
-                        Toast.LENGTH_LONG).show()
-                    Log.d("PostUpload", "Upload error detail: ${state.message}")
+                    Toast.makeText(requireContext(), "Upload failed", Toast.LENGTH_LONG).show()
                 }
                 else -> {
                     btnSharePost.isEnabled = true
@@ -159,8 +175,28 @@ class PostFragment : Fragment() {
             }
         }
 
+        // --- collect PostActionsViewModel events to update adapter ---
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            postActionsVm.events.collect { event ->
+                when (event) {
+                    is PostActionEvent.Deleted -> {
+                        val newList = adapter.currentList.filter { it.postId != event.postId }
+                        adapter.submitList(newList)
+                        Toast.makeText(requireContext(), "Post deleted", Toast.LENGTH_SHORT).show()
+                    }
+                    is PostActionEvent.Saved -> {
+                        Toast.makeText(requireContext(), event.message, Toast.LENGTH_SHORT).show()
+                    }
+                    is PostActionEvent.Error -> {
+                        Toast.makeText(requireContext(), event.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
         return v
     }
+
 
     private fun doSharePost() {
         val text = etPostContent.text?.toString()?.trim().orEmpty()
@@ -171,11 +207,12 @@ class PostFragment : Fragment() {
 
         // minimal optimistic PostDetail
         val nowIso = isoNow()
+        val optimisticLocalId = (-1 * (System.currentTimeMillis() % Int.MAX_VALUE)).toInt()
         val optimistic = PostDetail(
-            postId = Int.MIN_VALUE, // temporary negative id to identify optimistic item
+            postId = optimisticLocalId, // temporary negative id
             userId = session.getUserId(),
             userProfileImageUrl = null,
-            userName = session.getUserId().toString(),
+            userName = session.getUserId()?.toString(),
             postImageURl = selectedUri?.toString(),
             postType = determinePostTypeFromUri(selectedUri),
             postCreatedAt = nowIso,
@@ -185,35 +222,30 @@ class PostFragment : Fragment() {
             description = text
         )
 
-        // Insert optimistic item into UI
+        // Insert optimistic item into UI via VM
         vm.prependPostOptimistic(optimistic)
 
         // clear UI
         etPostContent.setText("")
         tvSelectedFile.text = "No file chosen"
-        // keep selectedUri until upload begins
 
-        // start upload
-        coroutineScope.launch {
+        // start upload (use lifecycleScope)
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
-                // validate auth token
                 val token = session.getToken()
                 if (token.isNullOrBlank()) {
                     Toast.makeText(requireContext(), "You are not logged in.", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
-                // ensure pageId is valid before calling API
                 if (pageId == -1) {
                     Toast.makeText(requireContext(),
                         "Page not ready yet. Please try again in a moment.",
                         Toast.LENGTH_SHORT).show()
-                    // (Optional) remove optimistic post if you want:
-                    // vm.removePostByLocalId(optimistic.postId) // implement this in VM if desired
                     return@launch
                 }
 
-                // if a file was chosen, ensure we can access it before calling ViewModel
+                // ensure uri is accessible
                 if (selectedUri != null) {
                     var streamOk = true
                     try {
@@ -225,29 +257,27 @@ class PostFragment : Fragment() {
                         Toast.makeText(requireContext(),
                             "Upload failed. Unable to access the file for the upload.",
                             Toast.LENGTH_LONG).show()
-                        // (Optional) remove optimistic post if you want:
-                        // vm.removePostByLocalId(optimistic.postId)
+                        vm.removePostByLocalId(optimisticLocalId)
                         return@launch
                     }
                 }
 
-                // CALL ViewModel upload with context — ViewModel should copy Uri -> temp File and call repo
+                // call ViewModel upload; VM will emit UploadState and replace optimistic when done
                 vm.uploadPagePost(
                     context = requireContext(),
-                    pageAdminUserId = pageAdminUserId.takeIf { it != -1 } ?: session.getUserId(),
+                    pageAdminUserId = pageAdminUserId.takeIf { it != -1 } ?: session.getUserId() ?: -1,
                     pageId = pageId,
                     postName = text,
                     postType = optimistic.postType ?: "",
                     selectedUri = selectedUri,
                     token = token,
-                    optimisticLocalId = optimistic.postId
+                    optimisticLocalId = optimisticLocalId
                 )
-
             } catch (e: Exception) {
                 Log.d("PostUpload", "Upload failed", e)
                 Toast.makeText(requireContext(), "Upload failed. Try again.", Toast.LENGTH_SHORT).show()
+                vm.removePostByLocalId(optimisticLocalId)
             } finally {
-                // clear selectedUri after upload started
                 selectedUri = null
             }
         }
@@ -263,20 +293,8 @@ class PostFragment : Fragment() {
         }
     }
 
-    private fun onLikeClicked(post: PostDetail, pos: Int) {
-        Toast.makeText(requireContext(), "Like clicked", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun onCommentClicked(post: PostDetail, pos: Int) {
-        Toast.makeText(requireContext(), "Comment clicked", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun onShareClicked(post: PostDetail, pos: Int) {
-        Toast.makeText(requireContext(), "Share clicked", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun onMoreClicked(post: PostDetail, pos: Int, anchor: View) {
-        Toast.makeText(requireContext(), "More clicked", Toast.LENGTH_SHORT).show()
+    override fun onDestroyView() {
+        super.onDestroyView()
     }
 
     private fun isoNow(): String {
@@ -287,10 +305,5 @@ class PostFragment : Fragment() {
         } catch (e: Exception) {
             System.currentTimeMillis().toString()
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        coroutineScope.cancel()
     }
 }

@@ -10,7 +10,9 @@ class PostActionsVMFactory(
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        require(modelClass.isAssignableFrom(PostActionsViewModel::class.java))
-        return PostActionsViewModel(repo) as T
+        if (modelClass.isAssignableFrom(PostActionsViewModel::class.java)) {
+            return PostActionsViewModel(repo) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

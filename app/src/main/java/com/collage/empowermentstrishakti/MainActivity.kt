@@ -161,18 +161,7 @@ class MainActivity : BaseActivity() {
         recyclerView.setHasFixedSize(true)
         recyclerView.setItemViewCacheSize(10)
 
-//        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-//            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-//                val layoutManager = rv.layoutManager as LinearLayoutManager
-//                val lastVisible = layoutManager.findLastVisibleItemPosition()
-//                val totalItemCount = layoutManager.itemCount
-//
-//                // Trigger pagination when reaching near end
-//                if (!isLoading && hasNextPage && lastVisible >= totalItemCount - 2) {
-//                    loadHomePosts()
-//                }
-//            }
-//        })
+
 
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             private var lastTriggerTime = 0L
@@ -283,83 +272,6 @@ class MainActivity : BaseActivity() {
 
 
 
-    // ------------------------------------------------------------------------------------------
-    // 🔹 Load Posts (Optimized)
-//    private fun loadHomePosts() {
-//        if (isLoading || !hasNextPage) return
-//        isLoading = true
-//
-//        val isFirstPage = nextCursor == 0L
-//
-//        if (isFirstPage) {
-//            progressBar.visibility = View.VISIBLE
-//            emptyTextView.visibility = View.GONE
-//        } else {
-//            // 🧠 Delay ensures RecyclerView renders footer before API response arrives
-//            Handler(Looper.getMainLooper()).post {
-//                adapter.showLoading()
-//            }
-//        }
-//
-//        lifecycleScope.launch(Dispatchers.IO) {
-//            try {
-//                val cursor = nextCursor ?: 0L
-//                val response = apiService.getHomePosts(userId, cursor, pageSize, token)
-//
-//                if (response.isSuccessful) {
-//                    val body = response.body()
-//                    val posts = body?.postsData ?: emptyList()
-//
-//                    nextCursor = body?.nextCursor
-//                    hasNextPage = body?.hasNextPage ?: false
-//
-//                    val updatedList = adapter.currentList.toMutableList()
-//
-//                    // remove loading if already visible
-//                    updatedList.removeAll { it is HomeFeedItem.LoadingItem }
-//
-//                    val postItems = posts.map { HomeFeedItem.PostItem(it) }
-//                    updatedList.addAll(postItems)
-//
-//                    // add reel section only after first 5 posts on first load
-//                    if (cursor == 0L) {
-//                        val reelsResponse = apiService.getAllReels(0, 10, token)
-//                        if (reelsResponse.isSuccessful) {
-//                            val reels = reelsResponse.body()?.postsData ?: emptyList()
-//                            if (reels.isNotEmpty()) {
-//                                val insertIndex = if (updatedList.size >= 5) 5 else updatedList.size
-//                                updatedList.add(insertIndex, HomeFeedItem.ReelSection(reels))
-//                            }
-//                        }
-//                    }
-//
-//                    withContext(Dispatchers.Main) {
-//                        progressBar.visibility = View.GONE
-//                        adapter.submitList(updatedList)
-//                        emptyTextView.visibility =
-//                            if (updatedList.isEmpty()) View.VISIBLE else View.GONE
-//                    }
-//
-//                } else {
-//                    hasNextPage = false
-//                    withContext(Dispatchers.Main) {
-//                        Toast.makeText(this@MainActivity, "Failed to load posts", Toast.LENGTH_SHORT).show()
-//                    }
-//                }
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//                withContext(Dispatchers.Main) {
-//                    Toast.makeText(this@MainActivity, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-//                }
-//            } finally {
-//                withContext(Dispatchers.Main) {
-//                    adapter.hideLoading()
-//                    progressBar.visibility = View.GONE
-//                    isLoading = false
-//                }
-//            }
-//        }
-//    }
 
 
     private fun loadHomePosts() {
@@ -563,108 +475,6 @@ class MainActivity : BaseActivity() {
             false
         }
     }
-
-
-    // ------------------------------------------------------------------------------------------
-//    private suspend fun loadAnnouncementAndAdsAndShowPopup(): Boolean = suspendCancellableCoroutine { cont ->
-//        lifecycleScope.launch {
-//            try {
-//                val announcementResp = apiService.getAnnouncement("SUP_ADMIN_ANNOUNCEMENT", token)
-//                val adsSuperAdminResp = apiService.getAdsSuperAdmin(postCategory, token)
-//                val adsAdminResp = apiService.getAdsAdmin(postCategory, token)
-//
-//                // Helper function to map API response to user-friendly error message
-//                fun getErrorMessageForAnnouncement(response: Response<AnnouncementResponse>): String? {
-//                    return try {
-//                        if (!response.isSuccessful) {
-//                            val errorString = response.errorBody()?.string()
-//                            val json = errorString?.let { JSONObject(it) }
-//                            val message = json?.optString("message", "")
-//                            if (message.isNullOrEmpty() || !message.contains("No posts found", ignoreCase = true)) {
-//                                "Failed to load Admin announcements"
-//                            } else {
-//                                "\uD83D\uDCE2 No new admin announcements at the moment"
-//                            }
-//                        } else if (response.body()?.postData == null) {
-//                            "\uD83D\uDCE2 No new admin announcements at the moment"
-//                        } else {
-//                            null // Valid response
-//                        }
-//                    } catch (e: Exception) {
-//                        "Failed to load Admin announcements"
-//                    }
-//                }
-//
-//                fun getErrorMessageForAds(response: Response<AdsResponse>, type: String): String? {
-//                    return try {
-//                        if (!response.isSuccessful) {
-//                            val errorString = response.errorBody()?.string()
-//                            val json = errorString?.let { JSONObject(it) }
-//                            val message = json?.optString("message", "")
-//                            if (message.isNullOrEmpty() || !message.contains("No posts found", ignoreCase = true)) {
-//                                "Failed to load $type announcements"
-//                            } else {
-//                                "No $type announcements available"
-//                            }
-//                        } else if (response.body()?.postData.isNullOrEmpty()) {
-//                            "No $type announcements available"
-//                        } else {
-//                            null // Valid response
-//                        }
-//                    } catch (e: Exception) {
-//                        "Failed to load $type announcements"
-//                    }
-//                }
-//
-//                // Announcement error
-//                getErrorMessageForAnnouncement(announcementResp)?.let {
-//                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show()
-//                    cont.resume(false) {}
-//                    return@launch
-//                }
-//
-//                val announcement = announcementResp.body()!!.postData!!
-//
-//                // Super Admin Ads error
-//                getErrorMessageForAds(adsSuperAdminResp, "Super Admin")?.let {
-//                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show()
-//                }
-//
-//                // Admin Ads error
-//                getErrorMessageForAds(adsAdminResp, "Admin")?.let {
-//                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show()
-//                }
-//
-//                // Show popup dialog (only if announcement exists)
-//                recyclerView.isEnabled = false
-//                recyclerView.alpha = 0.4f
-//
-//                val dialog = AnnouncementAdsPopupDialog.newInstance(
-//                    announcement,
-//                    adsSuperAdminResp.body(),
-//                    adsAdminResp.body()
-//                )
-//                dialog.show(supportFragmentManager, "AnnouncementAdsPopup")
-//
-//                dialog.setOnDismissListener {
-//                    recyclerView.isEnabled = true
-//                    recyclerView.alpha = 1f
-//                    cont.resume(true) {}
-//                }
-//
-//                delay(5000)
-//                if (dialog.isAdded && dialog.isVisible) dialog.dismiss()
-//
-//            } catch (e: Exception) {
-//                recyclerView.isEnabled = true
-//                recyclerView.alpha = 1f
-//                Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-//                cont.resume(false) {}
-//            }
-//        }
-//    }
-
-
 
 
 
