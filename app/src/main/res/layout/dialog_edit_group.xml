@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Group Name -->
+        <EditText
+            android:id="@+id/etGroupName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Group Name"
+            android:inputType="textPersonName"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Group Description -->
+        <EditText
+            android:id="@+id/etGroupDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Group Description"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Cover Image Picker -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <Button
+                android:id="@+id/btnPickCover"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose Cover Image" />
+
+            <TextView
+                android:id="@+id/tvCoverName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No file chosen"
+                android:layout_marginStart="10dp"/>
+        </LinearLayout>
+
+        <!-- Save Button -->
+        <Button
+            android:id="@+id/btnSaveGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:backgroundTint="@color/instagram_red"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+</ScrollView>

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.collage.empowermentstrishakti.CreateEventActivity
 import com.collage.empowermentstrishakti.CreatePostDialogFragment
+import com.collage.empowermentstrishakti.GroupListActivity
 import com.collage.empowermentstrishakti.LoginActivity
 import com.collage.empowermentstrishakti.MainActivity
 import com.collage.empowermentstrishakti.R
@@ -43,6 +44,9 @@ object BottomNavigationHelper {
                 }
                 R.id.profile -> {
                     activity.startActivity(Intent(activity, UserProfileActivity::class.java))
+                }
+                R.id.group -> {
+                    activity.startActivity(Intent(activity, GroupListActivity::class.java))
                 }
                 R.id.nav_profile -> {
                     AlertDialog.Builder(activity)

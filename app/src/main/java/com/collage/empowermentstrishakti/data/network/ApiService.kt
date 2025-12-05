@@ -14,6 +14,8 @@ import com.collage.empowermentstrishakti.data.model.Event.EventResponse
 import com.collage.empowermentstrishakti.data.model.Event.JoinEventResponse
 import com.collage.empowermentstrishakti.data.model.Event.ParticipantResponse
 import com.collage.empowermentstrishakti.data.model.FriendListResponse
+import com.collage.empowermentstrishakti.data.model.Groups.GroupDetailsResponse
+import com.collage.empowermentstrishakti.data.model.Groups.GroupListResponse
 import com.collage.empowermentstrishakti.data.model.Notification.MarkReadResponse
 import com.collage.empowermentstrishakti.data.model.Notification.NotificationResponse
 import com.collage.empowermentstrishakti.data.model.PageDetailsResponse
@@ -577,6 +579,36 @@ interface ApiService {
         @Part userProfileImagePath: MultipartBody.Part?,
         @Part userCoverProfileImagePath: MultipartBody.Part?
     ): Response<UpdateUserResponse>
+    //group
+    @GET("ssakti/users/group/getGroups/{userId}")
+    suspend fun getGroups(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int
+    ): Response<GroupListResponse>
+
+
+    @GET("ssakti/users/group/getGroupDetails/{userId}/{groupUUID}")
+    suspend fun getGroupDetails(
+        @Path("userId") userId: Int,
+        @Path("groupUUID") groupUUID: String,
+        @Query("page") page: Int,
+        @Query("size") size: Int,
+        @Header("Authorization") token: String
+    ): Response<GroupDetailsResponse>
+
+
+    @Multipart
+    @PUT("ssakti/users/group/updateGroup/{adminId}/{groupId}")
+    suspend fun updateGroup(
+        @Path("adminId") adminId: Int,
+        @Path("groupId") groupId: Int,
+        @Header("Authorization") token: String,
+        @PartMap params: Map<String, @JvmSuppressWildcards RequestBody>,
+        @Part coverImage: MultipartBody.Part? = null
+    ): Response<CommonResponse>
+
+
+
 
 }
 

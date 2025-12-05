@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <!-- Upload Section (Admin Only) -->
+    <LinearLayout
+        android:id="@+id/layoutUploadSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_rounded"
+        android:padding="10dp"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/etPostContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="What's on your mind?"
+            android:background="@drawable/bg_input"
+            android:padding="10dp"
+            android:minHeight="80dp"
+            android:gravity="top" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="10dp">
+
+            <Button
+                android:id="@+id/btnPickMedia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose File" />
+
+            <TextView
+                android:id="@+id/tvSelectedFile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No file chosen"
+                android:layout_marginStart="10dp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSharePost"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Share"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/socialBlue"
+            android:textColor="@android:color/white" />
+
+    </LinearLayout>
+
+    <!-- RecyclerView for Posts -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerPosts"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="10dp" />
+
+</LinearLayout>

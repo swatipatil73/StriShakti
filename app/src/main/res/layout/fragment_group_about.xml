@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollAbout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:id="@+id/ll_about_root"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:elevation="0dp"
+        android:padding="8dp">
+
+        <!-- Top row: page title + Edit button (keeps id imgEditGroup for compatibility) -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvGroupName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Page Name"
+                android:textStyle="bold"
+                android:textSize="22sp"
+                android:textColor="@android:color/black"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"/>
+
+            <!-- EDIT BUTTON (keeps id imgEditGroup so existing Kotlin won't break) -->
+            <Button
+                android:id="@+id/imgEditGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:minWidth="48dp"
+                android:text="Edit"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/colorPrimary"
+                android:visibility="gone"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="0dp" />
+        </RelativeLayout>
+
+        <!-- Page Description (maps to tvGroupDesc id) -->
+        <TextView
+            android:id="@+id/tvGroupDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Page description goes here"
+            android:textSize="16sp"
+            android:textColor="#444"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Admin Info row -->
+        <LinearLayout
+            android:id="@+id/llAdmin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
+
+            <!-- keep original circle image id -->
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/imgAdmin"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/user"
+                android:layout_marginEnd="12dp" />
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tvAdminName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Admin: Someone"
+                    android:textSize="15sp"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/tvCreatedAt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Created: Jan 1, 2024"
+                    android:textSize="12sp"
+                    android:textColor="#666"
+                    android:layout_marginTop="2dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Group Cover Image (keeps original id) -->
+        <ImageView
+            android:id="@+id/imgGroupCover"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:visibility="gone"
+            android:layout_marginTop="12dp"
+            android:scaleType="centerCrop"
+            android:background="#EEEEEE" />
+
+        <!-- Optional link (keeps original id tvGroupLink) -->
+        <TextView
+            android:id="@+id/tvGroupLink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:autoLink="web"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/socialBlue"
+            android:visibility="gone" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="#F0F0F0"/>
+
+        <!-- spacing at bottom -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="20dp" />
+    </LinearLayout>
+</ScrollView>
