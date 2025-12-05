@@ -5,7 +5,7 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.collage.empowermentstrishakti.GroupAboutFragment
 import com.collage.empowermentstrishakti.GroupMembersFragment
-import com.collage.empowermentstrishakti.GroupPostFragment
+
 import com.collage.empowermentstrishakti.data.model.Groups.GroupDetailsResponse
 
 
@@ -20,7 +20,7 @@ class GroupPagerAdapter(
 
     override fun createFragment(position: Int): Fragment {
         return when (position) {
-            0 -> GroupPostFragment.newInstance(data)
+            0 -> com.collage.empowermentstrishakti.ui.group.GroupPostFragment.newInstance(data)
             1 -> GroupAboutFragment.newInstance(data)
             2 -> {
                 // Use currentGroupMembers (your model field) to pass to members fragment

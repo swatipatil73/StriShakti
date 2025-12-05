@@ -3,6 +3,7 @@ package com.collage.empowermentstrishakti
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import android.widget.Toolbar
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -29,6 +30,7 @@ class GroupDetailsActivity : AppCompatActivity() {
 
     private var groupId = -1
     private var groupUUID = ""
+    private var groupname = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -46,13 +48,23 @@ class GroupDetailsActivity : AppCompatActivity() {
 
         groupId = intent.getIntExtra("groupId", -1)
         groupUUID = intent.getStringExtra("groupUUID") ?: ""
+        groupname = intent.getStringExtra("groupname") ?: ""
 
-        // setupToolbar() // optional
+        // use binding.toolbar (safer)
+        val toolbar = binding.toolbar
+        setSupportActionBar(toolbar)
+
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            setDisplayShowTitleEnabled(true)
+            title = if (groupname.isNotBlank()) groupname else "Group"
+        }
+
+        toolbar.setNavigationOnClickListener { onBackPressed() }
 
         setupViewModel()
         observeData()
 
-        // Load Data
         viewModel.loadGroupDetails(
             session.getUserId(),
             groupUUID,

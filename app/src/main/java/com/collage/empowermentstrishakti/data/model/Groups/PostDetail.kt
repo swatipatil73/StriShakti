@@ -14,9 +14,9 @@ data class PostDetail(
     val videoThumbnailUrl: String?,
     val postCreatedAt: String?,
     val postName: String?,
-    val totalCountOFReact: Int,
+    var totalCountOFReact: Int,
     val totalComments: Int?,
-    val userReactStatus: Boolean,
+    var userReactStatus: Boolean,
     val postUploadedAt: String?,
     val userUUID: String?,
     val description: String?,
@@ -24,7 +24,7 @@ data class PostDetail(
     val commentsAndReacts: List<CommentReact>,  // <-- comma added
     val reachCount: Int,
     val viewCount: Int,
-    val postSaved: Boolean
+    var postSaved: Boolean
 ) : Parcelable
 
 @Parcelize

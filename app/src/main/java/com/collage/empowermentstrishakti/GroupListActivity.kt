@@ -123,6 +123,8 @@ class GroupListActivity : BaseActivity() {
         val intent = Intent(this, GroupDetailsActivity::class.java)
         intent.putExtra("groupId", group.groupId)
         intent.putExtra("groupUUID", group.groupUUID)
+        intent.putExtra("groupname", group.groupName)
+
         startActivity(intent)
     }
 
