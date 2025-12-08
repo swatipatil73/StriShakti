@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.collage.empowermentstrishakti.Common.SessionManager
+import com.collage.empowermentstrishakti.data.model.Groups.SelectFriendsBottomSheet
 
 
 class GroupMembersFragment : Fragment(), GroupMemberAdapter.Listener {
@@ -30,23 +31,27 @@ class GroupMembersFragment : Fragment(), GroupMemberAdapter.Listener {
     companion object {
         private const val ARG_MEMBERS = "arg_members"
         private const val ARG_IS_ADMIN = "arg_is_admin"
+        private const val ARG_GROUP_ID = "arg_group_id"
 
-        fun newInstance(members: ArrayList<GroupMember>, isAdmin: Boolean = false): GroupMembersFragment {
+        fun newInstance(members: ArrayList<GroupMember>, isAdmin: Boolean = false, groupId: Int): GroupMembersFragment {
             val f = GroupMembersFragment()
             val args = Bundle()
             args.putParcelableArrayList(ARG_MEMBERS, members)
             args.putBoolean(ARG_IS_ADMIN, isAdmin)
+            args.putInt(ARG_GROUP_ID, groupId)
             f.arguments = args
             return f
         }
     }
 
+    private var groupId: Int = -1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             val incoming = it.getParcelableArrayList<GroupMember>(ARG_MEMBERS)
             if (!incoming.isNullOrEmpty()) membersList = incoming.toMutableList()
             isAdminMode = it.getBoolean(ARG_IS_ADMIN, false)
+            groupId = it.getInt(ARG_GROUP_ID, -1)
         }
     }
 
@@ -60,9 +65,37 @@ class GroupMembersFragment : Fragment(), GroupMemberAdapter.Listener {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        binding.fabAddMember.setOnClickListener {
+            openSelectFriendsSheet()
+        }
+
         setupRecycler()
         showEmptyIfNeeded()
     }
+
+    private fun openSelectFriendsSheet() {
+        val sessionManager = SessionManager(requireContext())
+        val currentUserId = sessionManager.getUserId()
+
+        if (groupId <= 0) {
+            Toast.makeText(requireContext(), "Invalid group id", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val sheet = SelectFriendsBottomSheet.newInstance(
+            adminUserId = currentUserId,
+            groupId = groupId, // <-- dynamically passed here
+            onMembersAdded = { newMembers ->
+                membersList.addAll(newMembers)
+                adapter.updateList(membersList)
+                showEmptyIfNeeded()
+            }
+        )
+        sheet.show(parentFragmentManager, "SelectFriends")
+    }
+
+
 
     private fun setupRecycler() {
         // get current user id from your session manager

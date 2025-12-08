@@ -14,6 +14,7 @@ import com.collage.empowermentstrishakti.data.model.Event.EventResponse
 import com.collage.empowermentstrishakti.data.model.Event.JoinEventResponse
 import com.collage.empowermentstrishakti.data.model.Event.ParticipantResponse
 import com.collage.empowermentstrishakti.data.model.FriendListResponse
+import com.collage.empowermentstrishakti.data.model.Groups.CreateGroupRequest
 import com.collage.empowermentstrishakti.data.model.Groups.GroupDetailsResponse
 import com.collage.empowermentstrishakti.data.model.Groups.GroupListResponse
 import com.collage.empowermentstrishakti.data.model.Notification.MarkReadResponse
@@ -608,7 +609,31 @@ interface ApiService {
     ): Response<CommonResponse>
 
 
+    @POST("ssakti/users/group/createGroup")
+    suspend fun createGroup(
+        @Query("adminUserId") adminUserId: Int,
+        @Query("membersIds") membersIds: List<Int>,   // multiple values allowed
+        @Header("Authorization") token: String,
+        @Body request: CreateGroupRequest
+    ): Response<CommonResponse>
 
+
+    @POST("ssakti/users/group/addmemberToGroup/{adminUserId}/{groupId}")
+    suspend fun addMembersToGroup(
+        @Path("adminUserId") adminUserId: Int,
+        @Path("groupId") groupId: Int,
+        @Query("userId") userIds: List<Int>,
+        @Header("Authorization") token: String
+    ): Response<CommonResponse>
+
+
+
+    @DELETE("ssakti/users/group/deleteGroup/{adminUserId}/{groupId}")
+    suspend fun deleteGroup(
+        @Header("Authorization") token: String,
+        @Path("adminUserId") adminUserId: Int,
+        @Path("groupId") groupId: Int
+    ): CommonResponse
 
 }
 

@@ -12,8 +12,8 @@ android {
         applicationId = "com.collage.empowermentstrishakti"
         minSdk = 26
         targetSdk = 36
-        versionCode = 23
-        versionName = "5.8"
+        versionCode = 24
+        versionName = "5.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -106,7 +106,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.9.4")
     implementation("androidx.activity:activity-ktx:1.11.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
-
+    implementation("com.google.android.play:app-update:2.1.0")
     // Ads (pick ONE)
    // implementation("com.google.android.gms:play-services-ads:23.+")
     // implementation("com.google.android.gms:play-services-ads-lite:23.+")

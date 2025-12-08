@@ -22,14 +22,11 @@ class GroupPagerAdapter(
         return when (position) {
             0 -> com.collage.empowermentstrishakti.ui.group.GroupPostFragment.newInstance(data)
             1 -> GroupAboutFragment.newInstance(data)
+
+
             2 -> {
-                // Use currentGroupMembers (your model field) to pass to members fragment
                 val members = ArrayList(data.currentGroupMembers ?: emptyList())
-                // Try to infer admin flag from groupAbout if your GroupAbout has such a field.
-                // If not, change the expression below to your own logic (e.g., check session user id).
                 val isAdmin = try {
-                    // If GroupAbout has an 'isAdmin' boolean field, this will work.
-                    // Otherwise this will default to false.
                     (data.groupAbout?.javaClass?.getDeclaredField("isAdmin") != null &&
                             (data.groupAbout?.let {
                                 val f = it.javaClass.getDeclaredField("isAdmin")
@@ -40,8 +37,11 @@ class GroupPagerAdapter(
                     false
                 }
 
-                GroupMembersFragment.newInstance(members, isAdmin = isAdmin)
+                // Pass groupId to fragment via arguments
+                val groupId = data.groupAbout?.groupId ?: -1
+                GroupMembersFragment.newInstance(members, isAdmin = isAdmin, groupId = groupId)
             }
+
             else -> Fragment()
         }
     }

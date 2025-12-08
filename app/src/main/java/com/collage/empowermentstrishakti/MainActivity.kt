@@ -1,5 +1,6 @@
 package com.collage.empowermentstrishakti
 
+import android.app.Activity
 import android.os.Bundle
 import android.view.View
 
@@ -56,6 +57,13 @@ import com.collage.empowermentstrishakti.ui.RegisterViewModel.PostActionsViewMod
 import org.json.JSONObject
 import retrofit2.Response
 
+import android.content.Intent
+import android.content.IntentSender
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
+
+
 class MainActivity : BaseActivity() {
 
     private lateinit var progressBar: ProgressBar
@@ -79,7 +87,7 @@ class MainActivity : BaseActivity() {
     private val pageSize = 5
     private var pageSizeFirst = 2      // 👈 first page only 2
     private val pageSizeNext  = 5      // 👈 later pages as before
-
+    private val REQUEST_CODE_UPDATE = 100
     private val postCategory = "YOUR_POST_CATEGORY"
     // replace this
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,6 +112,8 @@ class MainActivity : BaseActivity() {
             val dialog = CreatePostDialogFragment()
             dialog.show(supportFragmentManager, "CreatePostDialog")
         }
+
+        checkForUpdate()
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
         BottomNavigationHelper.setupBottomNavigation(this, bottomNavigationView, R.id.nav_home)
@@ -147,6 +157,38 @@ class MainActivity : BaseActivity() {
         }
     }
 
+
+
+    private fun checkForUpdate() {
+        val appUpdateManager = AppUpdateManagerFactory.create(this)
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        AppUpdateType.IMMEDIATE,
+                        this,
+                        REQUEST_CODE_UPDATE
+                    )
+                } catch (e: IntentSender.SendIntentException) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_UPDATE) {
+            if (resultCode != Activity.RESULT_OK) {
+                Toast.makeText(this, "Update failed or canceled!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     // ------------------------------------------------------------------------------------------
     // 🔹 RecyclerView setup
     private fun setupRecyclerView() {
