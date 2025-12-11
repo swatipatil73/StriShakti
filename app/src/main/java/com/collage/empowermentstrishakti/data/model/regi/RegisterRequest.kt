@@ -16,6 +16,7 @@ data class RegisterRequest(
     val subRole: String? = null,
 
     val isSwayamsiddha: Boolean,
+    val isAdiShakti: Boolean,
     val termsAndConditionsAccepted: Boolean,
 
     // Optional IDs as strings

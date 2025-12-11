@@ -216,6 +216,22 @@
 
                                 </Spinner>
 
+                <!-- AdiShakti spinner -->
+                <Spinner
+                    android:id="@+id/spinner_adishakti"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" />
+
+                <!-- Role spinner (for AdiShakti roles). Hidden by default -->
+                <Spinner
+                    android:id="@+id/spinner_role_adi"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_marginTop="8dp" />
+
+
                 <!-- Password -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/til_password"
