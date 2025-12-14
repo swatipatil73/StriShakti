@@ -90,6 +90,18 @@ abstract class BaseActivity : AppCompatActivity() {
                     val intent = Intent(this, AllAdsActivity::class.java)
                     startActivity(intent)
                 }
+
+                R.id.newprofile -> {     // Profile menu
+                    val intent = Intent(this, FriendListActivity::class.java)
+                    intent.putExtra("MODE", "PROFILE")   // <-- important
+                    startActivity(intent)
+                }
+
+                R.id.nav_chat -> {        // Chat menu
+                    val intent = Intent(this, FriendListActivity::class.java)
+                    intent.putExtra("MODE", "CHAT")      // <-- important
+                    startActivity(intent)
+                }
                 R.id.delete -> {
                     AlertDialog.Builder(this)
                         .setTitle("Delete Account")

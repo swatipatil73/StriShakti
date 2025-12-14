@@ -20,6 +20,7 @@ import com.collage.empowermentstrishakti.Adapter.FriendListAdapter
 import com.collage.empowermentstrishakti.Adapter.SearchUserAdapter
 import com.collage.empowermentstrishakti.Common.BaseActivity
 import com.collage.empowermentstrishakti.Common.BottomNavigationHelper
+import com.collage.empowermentstrishakti.Common.FriendClickType
 import com.collage.empowermentstrishakti.Common.SessionManager
 import com.collage.empowermentstrishakti.Factory.FriendListViewModelFactory
 import com.collage.empowermentstrishakti.data.network.ApiClient
@@ -41,6 +42,8 @@ class FriendListActivity : BaseActivity() {
     private lateinit var friendsAdapter: FriendListAdapter
     private lateinit var searchAdapter: SearchUserAdapter
     private lateinit var bottomNavigationView: BottomNavigationView
+    private var clickType: FriendClickType = FriendClickType.PROFILE
+
     private var friendRequestBadge: TextView? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +51,15 @@ class FriendListActivity : BaseActivity() {
         binding = ActivityFriendListBinding.inflate(layoutInflater)
         setContentView(binding.root)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+
+        val mode = intent.getStringExtra("MODE")
+
+        clickType = if (mode == "CHAT") {
+            FriendClickType.CHAT
+        } else {
+            FriendClickType.PROFILE
+        }
+
         setupToolbar(
             title = "Stri Shakti",
             showSearch = false,
@@ -175,25 +187,36 @@ class FriendListActivity : BaseActivity() {
     }
 
     private fun setupRecycler() {
-        // Friends list adapter click
-        friendsAdapter = FriendListAdapter(emptyList()) { friend ->
-            val intent = Intent(this, UserProfileActivity::class.java)
-                .putExtra("UUID", friend.userUUID)   // Needed to fetch profile
-                .putExtra("USER_ID", friend.userId)  // Pass userId for friend request
-            startActivity(intent)
-        }
 
-        // Search adapter click
+        friendsAdapter = FriendListAdapter(
+            emptyList(),
+            clickType,         // <-- important
+            onProfileClick = { friend ->
+                val intent = Intent(this, UserProfileActivity::class.java)
+                    .putExtra("UUID", friend.userUUID)
+                    .putExtra("USER_ID", friend.userId)
+                startActivity(intent)
+            },
+            onChatClick = { friend ->
+                val intent = Intent(this, ChatActivity::class.java)
+                    .putExtra("UUID", friend.userUUID)
+                    .putExtra("USER_ID", friend.userId)
+                startActivity(intent)
+            }
+        )
+
+        // Your search adapter stays same ❗
         searchAdapter = SearchUserAdapter { user ->
             val intent = Intent(this, UserProfileActivity::class.java)
                 .putExtra("UUID", user.userUUID)
-                .putExtra("USER_ID", user.userId)   // Make sure userId exists in search model
+                .putExtra("USER_ID", user.userId)
             startActivity(intent)
         }
 
         binding.rvFriends.layoutManager = LinearLayoutManager(this)
         binding.rvFriends.adapter = friendsAdapter
     }
+
 
     private fun observeData() {
         viewModel.friendsList.observe(this) { list ->

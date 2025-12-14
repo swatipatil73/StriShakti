@@ -4,12 +4,15 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.collage.empowermentstrishakti.Common.FriendClickType
 import com.collage.empowermentstrishakti.R
 import com.collage.empowermentstrishakti.data.model.FriendData
 import com.collage.empowermentstrishakti.databinding.ItemFriendBinding
 class FriendListAdapter(
     private var friendList: List<FriendData>,
-    private val onClick: (FriendData) -> Unit
+    private val clickType: FriendClickType,
+    private val onProfileClick: (FriendData) -> Unit,
+    private val onChatClick: (FriendData) -> Unit
 ) : RecyclerView.Adapter<FriendListAdapter.FriendViewHolder>() {
 
     inner class FriendViewHolder(val binding: ItemFriendBinding) :
@@ -23,7 +26,11 @@ class FriendListAdapter(
                 .into(binding.ivAvatar)
 
             binding.root.setOnClickListener {
-                onClick(friend) // Pass FriendData with UUID
+                if (clickType == FriendClickType.PROFILE) {
+                    onProfileClick(friend)
+                } else {
+                    onChatClick(friend)
+                }
             }
         }
     }

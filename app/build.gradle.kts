@@ -110,4 +110,19 @@ dependencies {
     // Ads (pick ONE)
    // implementation("com.google.android.gms:play-services-ads:23.+")
     // implementation("com.google.android.gms:play-services-ads-lite:23.+")
+
+    // STOMP WebSocket
+    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
+
+// RxJava required for StompClient
+    implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
+
+// Other dependencies
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.github.bumptech.glide:glide:4.14.2")
+
+
+
+// optional for avatars
 }
