@@ -1,7 +1,9 @@
 package com.collage.empowermentstrishakti
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import android.widget.Toast
 import android.widget.Toolbar
 import androidx.activity.enableEdgeToEdge
@@ -49,6 +51,16 @@ class GroupDetailsActivity : AppCompatActivity() {
         groupId = intent.getIntExtra("groupId", -1)
         groupUUID = intent.getStringExtra("groupUUID") ?: ""
         groupname = intent.getStringExtra("groupname") ?: ""
+
+        // after setContentView(...)
+        binding.ivRightIcon.setOnClickListener {
+            val intent = Intent(this, GroupChatActivity::class.java)
+            intent.putExtra("GROUP_ID", groupId)
+            intent.putExtra("GROUP_NAME", groupname)
+            startActivity(intent)
+        }
+
+
 
         // use binding.toolbar (safer)
         val toolbar = binding.toolbar

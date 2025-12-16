@@ -9,6 +9,7 @@ import com.collage.empowermentstrishakti.GroupListActivity
 import com.collage.empowermentstrishakti.LoginActivity
 import com.collage.empowermentstrishakti.MainActivity
 import com.collage.empowermentstrishakti.R
+import com.collage.empowermentstrishakti.ReelActivity
 import com.collage.empowermentstrishakti.UserProfileActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -45,8 +46,8 @@ object BottomNavigationHelper {
                 R.id.profile -> {
                     activity.startActivity(Intent(activity, UserProfileActivity::class.java))
                 }
-                R.id.group -> {
-                    activity.startActivity(Intent(activity, GroupListActivity::class.java))
+                R.id.reeldis -> {
+                    activity.startActivity(Intent(activity, ReelActivity::class.java))
                 }
                 R.id.nav_profile -> {
                     AlertDialog.Builder(activity)

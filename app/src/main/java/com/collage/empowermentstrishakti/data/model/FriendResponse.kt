@@ -12,5 +12,9 @@ data class FriendData(
     val friendRequestId: Int,
     val status: String,
     val userUUID: String
-)
+) {
+    val username_lastname: String
+        get() = "${userFirstName}_${userLastName}"
+}
+
 

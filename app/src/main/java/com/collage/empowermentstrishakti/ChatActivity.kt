@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.collage.empowermentstrishakti.Adapter.ChatAdapter
@@ -14,7 +16,13 @@ import com.collage.empowermentstrishakti.data.model.Chat.User
 import com.google.gson.Gson
 import com.collage.empowermentstrishakti.Adapter.ChatSocketManager
 import com.collage.empowermentstrishakti.Common.WebSocketClient
-
+import com.collage.empowermentstrishakti.data.model.Chat.ChatHistoryMapper
+import com.collage.empowermentstrishakti.data.network.ApiClient.apiService
+import com.collage.empowermentstrishakti.data.network.ApiService
+import com.collage.empowermentstrishakti.data.repository.ChatRepository
+import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.launch
+import androidx.appcompat.widget.Toolbar
 class ChatActivity : AppCompatActivity() {
 
     private lateinit var socket: ChatSocketManager
@@ -38,9 +46,19 @@ class ChatActivity : AppCompatActivity() {
         setContentView(R.layout.activity_chat)
 
 
+        val toolbar = findViewById<Toolbar>(R.id.chatToolbar)
+        setSupportActionBar(toolbar)
 
-//        wsClient = WebSocketClient()
-//        wsClient.connect()
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            title = intent.getStringExtra("USER_NAME") ?: "Chat"
+        }
+
+        toolbar.setNavigationOnClickListener {
+            onBackPressed()
+        }
+
+
 
         myUserId = SessionManager(this).getUserId()
         token = SessionManager(this).getToken() ?: ""
@@ -50,9 +68,14 @@ class ChatActivity : AppCompatActivity() {
         et = findViewById(R.id.etMessage)
         btnSend = findViewById(R.id.btnSend)
 
-        adapter = ChatAdapter(mutableListOf(), myUserId)
+        //adapter = ChatAdapter(mutableListOf(), myUserId)
+
+        adapter = ChatAdapter(myUserId)
+
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
+
+        loadChatHistory()
 
         setupSocket()
 
@@ -95,6 +118,38 @@ class ChatActivity : AppCompatActivity() {
 
         socket.connect()
     }
+
+
+    private fun loadChatHistory() {
+
+        lifecycleScope.launch {
+            try {
+                val repo = ChatRepository(apiService)
+                val mapper = ChatHistoryMapper()
+
+                val history = repo.loadChatHistory(
+                    token = token,
+                    senderId = myUserId,
+                    receiverId = receiverId
+                )
+
+                val uiItems = mapper.map(history)
+
+                adapter.setHistory(uiItems)
+                rv.scrollToPosition(adapter.itemCount - 1)
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(
+                    this@ChatActivity,
+                    "History load failed",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+
 
     private fun sendMessage() {
 

@@ -2,6 +2,8 @@ package com.collage.empowermentstrishakti.data.network
 
 
 
+import com.collage.empowermentstrishakti.data.model.Chat.ChatHistoryResponse
+import com.collage.empowermentstrishakti.data.model.Chat.GroupChatHistoryResponse
 import com.collage.empowermentstrishakti.data.model.Comment.CommentModel
 import com.collage.empowermentstrishakti.data.model.Comment.CommentResponse
 import com.collage.empowermentstrishakti.data.model.CreatePagePostRequest
@@ -634,6 +636,25 @@ interface ApiService {
         @Path("adminUserId") adminUserId: Int,
         @Path("groupId") groupId: Int
     ): CommonResponse
+
+
+
+    @GET("ssakti/users/chatmessage/historyonetone/{senderId}/{receiverId}")
+    suspend fun getOneToOneChatHistory(
+        @Header("Authorization") token: String,
+        @Path("senderId") senderId: Int,
+        @Path("receiverId") receiverId: Int
+    ): List<ChatHistoryResponse>
+
+
+
+    @GET("ssakti/users/chatmessage/history/group/{groupId}")
+    suspend fun getGroupChatHistory(
+        @Header("Authorization") token: String,
+        @Path("groupId") groupId: Int,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): GroupChatHistoryResponse
 
 }
 

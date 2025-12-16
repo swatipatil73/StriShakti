@@ -201,6 +201,7 @@ class FriendListActivity : BaseActivity() {
                 val intent = Intent(this, ChatActivity::class.java)
                     .putExtra("UUID", friend.userUUID)
                     .putExtra("USER_ID", friend.userId)
+                    .putExtra("USER_NAME", friend.username_lastname)
                 startActivity(intent)
             }
         )
