@@ -5,6 +5,7 @@ import android.app.DatePickerDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.PixelCopy.request
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatButton
 import androidx.lifecycle.Observer
 import com.collage.empowermentstrishakti.Common.BaseActivity
+import com.collage.empowermentstrishakti.Common.UserType
 import com.collage.empowermentstrishakti.R
 import com.collage.empowermentstrishakti.data.model.regi.College
 import com.collage.empowermentstrishakti.data.model.regi.Department
@@ -31,6 +33,7 @@ import java.util.*
 
 class RegisterActivity : BaseActivity() {
     val viewModel: RegisterViewModel by viewModels()
+    private lateinit var userType: UserType
 
     // UI elements
     private lateinit var stateSpinner: Spinner
@@ -47,9 +50,7 @@ class RegisterActivity : BaseActivity() {
     // Swayamsiddha sub-role spinner (STUDENT/FACULTY/etc)
     private lateinit var roleSpinner: Spinner
 
-    // AdiShakti role spinner (maps to backend ROLE_...)
-    private lateinit var roleSpinneradi: Spinner
-    private lateinit var adiShaktiSpinner: Spinner
+
 
     // Selected role values
     private var selectedSubRole: String? = null    // for Swayamsiddha (STUDENT/FACULTY/...)
@@ -79,47 +80,42 @@ class RegisterActivity : BaseActivity() {
     private var selectedStudyCentreId: Int = 0
     private var selectedDepartmentId: Int = 0
     private var selectedStreamId: Int = 0
+    private lateinit var spinnerLocalBodyType: Spinner
+    private lateinit var etLocalBodyName: TextInputEditText
+    private lateinit var etWardNo: TextInputEditText
 
-    // AdiShakti display list & map
-    private val adishaktiDisplayList = listOf(
-        "Please select role",
-        "Secretary Office",
-        "Divisional Commissioner Office",
-        "District Collector Office",
-        "CEO Zila Parishad Office",
-        "Tahsildar",
-        "BDO",
-        "CEO Nagar Palika",
-        "CEO Mahanagar Palika",
-        "Gram panchayat",
-        "User"
+    // UI display list
+    private val localBodyDisplayList = listOf(
+        "Select Local Body Type",
+        "Gram Panchayat",
+        "Nagar Palika",
+        "Mahanagar Palika"
     )
 
-    private val adishaktiRoleMap = mapOf(
-        "Secretary Office" to "ROLE_SECRETARY_OFFICE",
-        "Divisional Commissioner Office" to "ROLE_DIVISIONAL_COMMISSIONER",
-        "District Collector Office" to "ROLE_DISTRICT_COLLECTOR",
-        "CEO Zila Parishad Office" to "ROLE_CEO_ZILA_PARISHAD",
-        "Tahsildar" to "ROLE_TAHSILDAR",
-        "BDO" to "ROLE_BDO",
-        "CEO Nagar Palika" to "ROLE_CEO_NAGAR_PALIKA",
-        "CEO Mahanagar Palika" to "ROLE_CEO_MAHANAGAR_PALIKA",
-        "Gram panchayat" to "ROLE_GRAM_PANCHAYAT",
-        "User" to "ROLE_USER"
+    // Backend mapping
+    private val localBodyTypeMap: Map<String, String> = mapOf(
+        "Gram Panchayat" to "GRAM_PANCHAYAT",
+        "Nagar Palika" to "NAGAR_PALIKA",
+        "Mahanagar Palika" to "MAHANAGAR_PALIKA"
     )
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
 
-        initViews()
 
-        // setup spinners and helpers
-        setupSwayamsiddhaSpinner()
-        setupAdiShaktiSpinner()
-        setupAdiRoleSpinner()
-        // Swayam sub-role spinner already initialized in initViews via setupSwayamRoleSpinner()
+
+        userType = UserType.valueOf(
+            intent.getStringExtra("USER_TYPE") ?: UserType.NORMAL.name
+        )
+
+        initViews()          // ✅ FIRST
+        setupUIByUserType()  // ✅ THEN
+
+
+
         setupDatePicker()
         setupStateDropdown()
         setupObservers()
@@ -144,10 +140,14 @@ class RegisterActivity : BaseActivity() {
         universitySpinner = findViewById(R.id.spinner_university)
         collegeSpinner = findViewById(R.id.spinner_college)
         schoolSpinner = findViewById(R.id.spinner_schools)
-        adiShaktiSpinner = findViewById(R.id.spinner_adishakti)
-        roleSpinneradi = findViewById(R.id.spinner_role_adi) // ensure this exists in XML
-        // initially hide AdiShakti role spinner until AdiShakti = Yes
-        roleSpinneradi.visibility = View.GONE
+
+        spinnerLocalBodyType = findViewById(R.id.spinner_local_body_type)
+        etLocalBodyName = findViewById(R.id.et_local_body_name)
+        etWardNo = findViewById(R.id.et_ward_no)
+
+
+
+
 
         studyCentreSpinner = findViewById(R.id.spinner_studycentre)
         firstName = findViewById(R.id.et_first_name)
@@ -190,22 +190,7 @@ class RegisterActivity : BaseActivity() {
         }
     }
 
-    private fun setupAdiRoleSpinner() {
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, adishaktiDisplayList)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        roleSpinneradi.adapter = adapter
 
-        roleSpinneradi.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                val display = adishaktiDisplayList.getOrNull(position) ?: ""
-                selectedAdiRole = adishaktiRoleMap[display] ?: ""
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {
-                selectedAdiRole = ""
-            }
-        }
-    }
 
     private fun setDefaultSpinner(spinner: Spinner, defaultText: String) {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf(defaultText))
@@ -213,54 +198,7 @@ class RegisterActivity : BaseActivity() {
         spinner.adapter = adapter
     }
 
-    private fun setupAdiShaktiSpinner() {
-        val options = arrayOf("Are you an AdiShakti user?", "No", "Yes")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
-        adiShaktiSpinner.adapter = adapter
 
-        adiShaktiSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                val adishaktiYes = position == 2
-                if (adishaktiYes) {
-                    // Show AdiShakti role spinner
-                    roleSpinneradi.visibility = View.VISIBLE
-                    // Mutual exclusion: set Swayamsiddha to No and hide its extended form
-                    swayamSpinner.setSelection(1) // "No"
-                    hideExtendedForm()
-                } else {
-                    // Hide the AdiShakti role spinner and reset selectedAdiRole
-                    roleSpinneradi.visibility = View.GONE
-                    selectedAdiRole = ""
-                    // reset roleSpinneradi to default first entry to avoid stale selection
-                    roleSpinneradi.setSelection(0)
-                }
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {}
-        }
-    }
-
-    private fun setupSwayamsiddhaSpinner() {
-        val options = arrayOf("Are you a Swayamsiddha user?", "No", "Yes")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
-        swayamSpinner.adapter = adapter
-
-        swayamSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                if (position == 2) { // Yes
-                    showExtendedForm()
-                    // Mutual exclusion: Swayamsiddha Yes => AdiShakti = No and hide roleSpinneradi
-                    adiShaktiSpinner.setSelection(1) // "No"
-                    roleSpinneradi.visibility = View.GONE
-                    selectedAdiRole = ""
-                } else {
-                    hideExtendedForm()
-                }
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {}
-        }
-    }
 
     // Activity-level show/hide animated methods (used by both spinners)
     private fun showExtendedForm() {
@@ -557,10 +495,12 @@ class RegisterActivity : BaseActivity() {
     }
 
     private fun registerUser() {
-        val swayamYes = swayamSpinner.selectedItem.toString() == "Yes"
-        val adishaktiYes = adiShaktiSpinner.selectedItem.toString() == "Yes"
+        val selectedDisplayValue = spinnerLocalBodyType.selectedItem.toString()
 
-        // Basic validation (common fields)
+        val backendLocalBodyType =
+            localBodyTypeMap[selectedDisplayValue]
+
+        // ================= COMMON VALIDATION =================
         if (firstName.text.isNullOrBlank() ||
             lastName.text.isNullOrBlank() ||
             email.text.isNullOrBlank() ||
@@ -577,34 +517,41 @@ class RegisterActivity : BaseActivity() {
             return
         }
 
-        // If Swayamsiddha user, ensure required swayam-specific fields are present
-        if (swayamYes) {
-            if (selectedSubRole.isNullOrBlank()) {
-                Toast.makeText(this, "Please select a Swayamsiddha sub-role", Toast.LENGTH_SHORT).show()
+        // ================= SWAYAMSIDHA VALIDATION =================
+        if (userType == UserType.SWAYAMSIDHA && selectedSubRole.isNullOrBlank()) {
+            Toast.makeText(this, "Please select Swayamsiddha sub-role", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // ================= ADISHAKTI VALIDATION =================
+        if (userType == UserType.ADISHAKTI) {
+            if (backendLocalBodyType == null ||
+                etLocalBodyName.text.isNullOrBlank() ||
+                etWardNo.text.isNullOrBlank()
+            ) {
+                Toast.makeText(this, "Please fill all AdiShakti details", Toast.LENGTH_SHORT).show()
                 return
             }
-            // Optionally validate university/college if required by backend
         }
 
-        // If AdiShakti user, require an Adi role selection (backend ROLE_...)
-        if (adishaktiYes) {
-            if (selectedAdiRole.isBlank()) {
-                Toast.makeText(this, "Please select an AdiShakti role", Toast.LENGTH_SHORT).show()
+
+
+        if (userType == UserType.SWAYAMSIDHA) {
+            if (universityId == 0 ||
+                selectedDepartmentId == 0 ||
+                selectedStreamId == 0
+            ) {
+                Toast.makeText(
+                    this,
+                    "Please complete all Swayamsiddha details",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return
             }
         }
 
-        // Determine userRole to send:
-        // - If AdiShakti selected -> send selectedAdiRole (ROLE_...)
-        // - Else -> default to ROLE_USER
-        val userRoleToSend = if (adishaktiYes && selectedAdiRole.isNotBlank()) {
-            selectedAdiRole
-        } else {
-            "ROLE_USER"
-        }
 
-        Log.d("RegisterDebug", "UniversityId: $universityId, CollegeUserId: $selectedCollegeUserId, SchoolId: $selectedSchoolId, StudyCentreId: $selectedStudyCentreId, DeptId: $selectedDepartmentId, StreamId: $selectedStreamId")
-        Log.d("RegisterDebug", "isSwayam=$swayamYes isAdiShakti=$adishaktiYes userRoleToSend=$userRoleToSend subRole=$selectedSubRole")
+        // ================= CREATE REQUEST (THIS WAS MISSING) =================
 
         val request = RegisterRequest(
             userFirstName = firstName.text.toString().trim(),
@@ -614,33 +561,62 @@ class RegisterActivity : BaseActivity() {
             userDateOfBirth = dob.text.toString().trim(),
             userAddress = address.text.toString().trim(),
             userPassword = password.text.toString().trim(),
+            userMobileNumber = phone.text.toString().trim(),
+
             stateId = stateId,
             districtId = districtId,
             talukaId = talukaId,
-            userMobileNumber = phone.text.toString().trim(),
-            userRole = userRoleToSend,
 
-            // Only send subRole if Swayamsiddha is YES
-            subRole = if (swayamYes) (selectedSubRole ?: "") else null,
+            // ✅ STATIC ROLE
+            userRole = "ROLE_USER",
 
-            isSwayamsiddha = swayamYes,
-            isAdiShakti = adishaktiYes,
-            termsAndConditionsAccepted = agreeCheckBox.isChecked,
+            // ================= SWAYAMSIDHA =================
+            subRole = if (userType == UserType.SWAYAMSIDHA) selectedSubRole else null,
 
-            universityId = if (swayamYes) universityId.toString() else "",
-            collegeId = if (swayamYes) selectedCollegeUserId.toString() else "",
-            schoolId = if (swayamYes) selectedSchoolId.toString() else "",
-            studyCentreId = if (swayamYes) selectedStudyCentreId.toString() else "",
-            departmentId = if (swayamYes) selectedDepartmentId.toString() else "",
-            streamId = if (swayamYes) selectedStreamId.toString() else "",
+            universityId = if (userType == UserType.SWAYAMSIDHA && universityId != 0)
+                universityId.toString() else null,
 
-            userProfileImagePath = "",
-            userCoverProfileImagePath = ""
+            collegeId = if (userType == UserType.SWAYAMSIDHA && selectedCollegeUserId != 0)
+                selectedCollegeUserId.toString() else null,
+
+            schoolId = if (userType == UserType.SWAYAMSIDHA && selectedSchoolId != 0)
+                selectedSchoolId.toString() else null,
+
+            studyCentreId = if (userType == UserType.SWAYAMSIDHA && selectedStudyCentreId != 0)
+                selectedStudyCentreId.toString() else null,
+
+            departmentId = if (userType == UserType.SWAYAMSIDHA && selectedDepartmentId != 0)
+                selectedDepartmentId.toString() else null,
+
+            streamId = if (userType == UserType.SWAYAMSIDHA && selectedStreamId != 0)
+                selectedStreamId.toString() else null,
+
+            // ================= ADISHAKTI =================
+            localBodyType = if (userType == UserType.ADISHAKTI)
+                backendLocalBodyType
+            else null,
+
+
+                    localBodyName = if (userType == UserType.ADISHAKTI)
+                etLocalBodyName.text.toString().trim() else null,
+
+            wardNo = if (userType == UserType.ADISHAKTI)
+                etWardNo.text.toString().trim() else null,
+
+
+
+            isSwayamsiddha = userType == UserType.SWAYAMSIDHA,
+            isAdiShakti = userType == UserType.ADISHAKTI,
+            termsAndConditionsAccepted = agreeCheckBox.isChecked
         )
 
-        Log.d("RegisterRequest", "Sending registration request: $request")
+
+
+        Log.d("RegisterRequest", request.toString())
         viewModel.registerUser(request)
     }
+
+
 
     private fun showErrorDialog(message: String) {
         AlertDialog.Builder(this)
@@ -673,4 +649,53 @@ class RegisterActivity : BaseActivity() {
         viewModel.fetchDepartments()
         viewModel.fetchStreams()
     }
+
+
+    private fun setupUIByUserType() {
+        when (userType) {
+
+            UserType.NORMAL -> {
+                hideExtendedForm()
+                hideAdiShaktiFields()
+            }
+
+            UserType.SWAYAMSIDHA -> {
+                hideAdiShaktiFields()
+                showExtendedForm() // only swayamsiddha layout
+            }
+
+            UserType.ADISHAKTI -> {
+                hideExtendedForm()
+                selectedAdiRole = "ROLE_USER" // static backend role
+                showAdiShaktiFields()
+            }
+        }
+    }
+
+    private fun hideAdiShaktiFields() {
+        spinnerLocalBodyType.visibility = View.GONE
+        etLocalBodyName.visibility = View.GONE
+        etWardNo.visibility = View.GONE
+
+    }
+
+
+    private fun showAdiShaktiFields() {
+        spinnerLocalBodyType.visibility = View.VISIBLE
+        etLocalBodyName.visibility = View.VISIBLE
+        etWardNo.visibility = View.VISIBLE
+
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            localBodyDisplayList
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerLocalBodyType.adapter = adapter
+    }
+
+
+
+
+
 }

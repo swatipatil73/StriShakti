@@ -44,11 +44,13 @@ object BottomNavigationHelper {
                     }
                 }
                 R.id.profile -> {
-                    activity.startActivity(Intent(activity, UserProfileActivity::class.java))
+                    //activity.startActivity(Intent(activity, UserProfileActivity::class.java))
+                    activity.startActivity(Intent(activity, GroupListActivity::class.java))
                 }
                 R.id.reeldis -> {
                     activity.startActivity(Intent(activity, ReelActivity::class.java))
                 }
+
                 R.id.nav_profile -> {
                     AlertDialog.Builder(activity)
                         .setTitle("Logout")

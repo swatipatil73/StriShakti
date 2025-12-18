@@ -33,7 +33,7 @@ class GroupChatActivity : AppCompatActivity() {
     private var myUserId = -1
     private lateinit var token: String
 
-    private val wsUrl = "wss://dev.notodrugs.live/ws-mobile"
+    private val wsUrl = "wss://backend.strishakti.org/ws-mobile"
 
     // Pagination
     private var page = 0

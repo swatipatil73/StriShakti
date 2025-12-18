@@ -217,19 +217,45 @@
                                 </Spinner>
 
                 <!-- AdiShakti spinner -->
-                <Spinner
-                    android:id="@+id/spinner_adishakti"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp" />
+
 
                 <!-- Role spinner (for AdiShakti roles). Hidden by default -->
+                <!-- Local Body Type -->
                 <Spinner
-                    android:id="@+id/spinner_role_adi"
+                    android:id="@+id/spinner_local_body_type"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    android:layout_marginTop="8dp" />
+                    android:layout_marginTop="8dp"
+                    style="@style/CustomEditTextStyle" />
+
+                <!-- Local Body Name -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:hint="Local Body Name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_local_body_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Ward Number -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:hint="Ward No"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_ward_no"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+
+
 
 
                 <!-- Password -->

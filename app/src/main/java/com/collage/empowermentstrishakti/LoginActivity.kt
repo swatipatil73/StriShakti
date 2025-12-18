@@ -20,11 +20,14 @@ import androidx.core.view.WindowInsetsCompat
 import com.collage.empowermentstrishakti.data.model.regi.LoginRequest
 import com.collage.empowermentstrishakti.data.model.regi.LoginResponse
 import com.collage.empowermentstrishakti.data.network.ApiClient
+import com.collage.empowermentstrishakti.R
 
 import android.widget.*
 import androidx.appcompat.app.AppCompatDelegate
 import com.collage.empowermentstrishakti.Common.BaseActivity
 import com.collage.empowermentstrishakti.Common.SessionManager
+import com.collage.empowermentstrishakti.Common.UserType
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import org.json.JSONObject
 
 import retrofit2.Call
@@ -68,9 +71,13 @@ class LoginActivity : BaseActivity() {
         val clickableSpan = object : ClickableSpan() {
             override fun onClick(widget: View) {
                 // Open RegisterActivity
-                val intent = Intent(this@LoginActivity, RegisterActivity::class.java)
-                startActivity(intent)
+                //val intent = Intent(this@LoginActivity, RegisterActivity::class.java)
+//startActivity(intent)
+                showUserTypeBottomSheet()
             }
+
+
+
 
             override fun updateDrawState(ds: TextPaint) {
                 super.updateDrawState(ds)
@@ -78,6 +85,7 @@ class LoginActivity : BaseActivity() {
                 ds.isUnderlineText = false // Optional: remove underline
             }
         }
+
 
         spannableString.setSpan(
             clickableSpan,
@@ -175,4 +183,49 @@ class LoginActivity : BaseActivity() {
         val phonePattern = Regex("^\\d{10}$")
         return emailPattern.matcher(input).matches() || phonePattern.matches(input)
     }
+
+
+    private fun showUserTypeBottomSheet() {
+        val sheet = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(
+            com.collage.empowermentstrishakti.R.layout.bottomsheet_user_type,
+            null
+        )
+
+        val tvNormal = view.findViewById<TextView>(
+            com.collage.empowermentstrishakti.R.id.tvNormal
+        )
+        val tvSwayam = view.findViewById<TextView>(
+            com.collage.empowermentstrishakti.R.id.tvSwayam
+        )
+        val tvAdi = view.findViewById<TextView>(
+            com.collage.empowermentstrishakti.R.id.tvAdi
+        )
+
+        tvNormal.setOnClickListener {
+            openRegister(UserType.NORMAL)
+            sheet.dismiss()
+        }
+
+        tvSwayam.setOnClickListener {
+            openRegister(UserType.SWAYAMSIDHA)
+            sheet.dismiss()
+        }
+
+        tvAdi.setOnClickListener {
+            openRegister(UserType.ADISHAKTI)
+            sheet.dismiss()
+        }
+
+        sheet.setContentView(view)
+        sheet.show()
+    }
+
+
+    private fun openRegister(userType: UserType) {
+        val intent = Intent(this, RegisterActivity::class.java)
+        intent.putExtra("USER_TYPE", userType.name)
+        startActivity(intent)
+    }
+
 }

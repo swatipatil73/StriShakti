@@ -8,27 +8,34 @@ data class RegisterRequest(
     val userDateOfBirth: String,
     val userAddress: String,
     val userPassword: String,
+    val userMobileNumber: String,
+
     val stateId: Int,
     val districtId: Int,
     val talukaId: Int,
-    val userMobileNumber: String,
+
     val userRole: String,
+
+    // ===== SWAYAMSIDHA =====
     val subRole: String? = null,
+    val universityId: String? = null,
+    val collegeId: String? = null,
+    val schoolId: String? = null,
+    val studyCentreId: String? = null,
+    val departmentId: String? = null,
+    val streamId: String? = null,
+
+    // ===== ADISHAKTI (ADD THESE) =====
+    val localBodyType: String? = null,
+    val localBodyName: String? = null,
+    val wardNo: String? = null,
+    val designation: String? = null,
 
     val isSwayamsiddha: Boolean,
     val isAdiShakti: Boolean,
     val termsAndConditionsAccepted: Boolean,
 
-    // Optional IDs as strings
-    val universityId: String = "",
-    val collegeId: String = "",
-    val schoolId: String = "",
-    val studyCentreId: String = "",
-    val departmentId: String = "",
-    val streamId: String = "",
-
     val userProfileImagePath: String = "",
     val userCoverProfileImagePath: String = ""
 )
-
 
