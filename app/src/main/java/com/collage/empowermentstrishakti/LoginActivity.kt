@@ -140,17 +140,33 @@ class LoginActivity : BaseActivity() {
                     val userLastName = body.userLastName ?: ""
                     val userName = if (userFirstName.isNotBlank()) "$userFirstName $userLastName".trim() else (body.userFirstName ?: "")
                     val token = body.token ?: ""
-                    val uuid = body.userUUID ?: ""
+
+                    val uuid = body.userUUID
+                    val isSwayamsiddha = body.isSwyamsiddha
+                    val isAdiShakti = body.isAdiShakti
+
+                    Log.d("ssswwe1", "Mapped roles -> isSwyamsiddha=$isSwayamsiddha, isAdiShakti=$isAdiShakti")
+
+// Save to SharedPreferences
+                    sessionManager.saveUserUuid(uuid)
+                    sessionManager.setIsSwayamsiddha(isSwayamsiddha)
+                    sessionManager.setIsAdiShakti(isAdiShakti)
+
+// Log after saving
+                    Log.d("ssswwe2", "Saved flags -> isSwayamsiddha=${sessionManager.isSwayamsiddha()}, isAdiShakti=${sessionManager.isAdiShakti()}")
 
                     // Save in SharedPreferences (SessionManager)
                     sessionManager.saveUserData(
                         userId = userId,
                         userName = userName,
                         token = token
-                    )
 
-                    // Save UUID separately (you added this helper)
+
+                    )
                     sessionManager.saveUserUuid(uuid)
+                    // Save UUID separately (you added this helper)
+
+
 
                     Log.d("LOGIN", "Saved -> userId=$userId, uuid=$uuid, tokenExists=${token.isNotEmpty()}")
 

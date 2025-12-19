@@ -17,11 +17,14 @@ import com.collage.empowermentstrishakti.data.model.regi.StudyCentre
 import com.collage.empowermentstrishakti.data.model.regi.Taluka
 import com.collage.empowermentstrishakti.data.model.regi.University
 import com.collage.empowermentstrishakti.data.network.ApiClient
+import com.collage.empowermentstrishakti.data.repository.UserProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-class RegisterViewModel : ViewModel() {
+class RegisterViewModel(
+    private val repository: UserProfileRepository
+) : ViewModel() {
 
     val stateList = MutableLiveData<List<State>>()
     val districtList = MutableLiveData<List<District>>()
@@ -43,6 +46,53 @@ class RegisterViewModel : ViewModel() {
 
     private lateinit var roleSpinner: Spinner
     private var selectedRole: String = ""
+
+
+    val updateSuccess = MutableLiveData<Boolean>()
+
+    fun updateUserRole(
+        userId: Int,
+        isSwayamsiddha: Boolean,
+        isAdiShakti: Boolean,
+        subRole: String? = null,
+        universityId: Int? = null,
+        collegeId: Int? = null,
+        departmentId: Int? = null,
+        streamId: Int? = null,
+        studyCentreId: Int? = null,
+        schoolId: Int? = null,
+        localBodyType: String? = null,
+        localBodyName: String? = null,
+        wardNo: String? = null
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = repository.updateUserMultipart(
+                    userId = userId,
+                    subRole = subRole,
+                    isSwayamsiddha = isSwayamsiddha,
+                    isAdiShakti = isAdiShakti,
+                    universityId = universityId,
+                    collegeId = collegeId,
+                    departmentId = departmentId,
+                    streamId = streamId,
+                    studyCentreId = studyCentreId,
+                    schoolId = schoolId,
+                    localBodyType = localBodyType,
+                    localBodyName = localBodyName,
+                    wardNo = wardNo
+                )
+
+                if (response.isSuccessful) {
+                    updateSuccess.postValue(true) // ✅ now this exists
+                } else {
+                    error.postValue("Failed to update role: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                error.postValue(e.message ?: "Something went wrong")
+            }
+        }
+    }
 
     fun fetchStates() {
         viewModelScope.launch(Dispatchers.IO) {

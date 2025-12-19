@@ -15,6 +15,24 @@ class SessionManager(context: Context) {
         editor.apply()
     }
 
+    // Save boolean flags (fixed)
+    fun setIsSwayamsiddha(value: Boolean) {
+        sharedPreferences.edit().putBoolean("isSwayamsiddha", value).apply()
+    }
+
+    fun setIsAdiShakti(value: Boolean) {
+        sharedPreferences.edit().putBoolean("isAdiShakti", value).apply()
+    }
+
+    // Get boolean flags
+    fun isSwayamsiddhas(): Boolean {
+        return sharedPreferences.getBoolean("isSwayamsiddha", false)
+    }
+
+    fun isAdiShaktis(): Boolean {
+        return sharedPreferences.getBoolean("isAdiShakti", false)
+    }
+
     // Optional: convenience method to save UUID separately (do not conflict with existing callsites)
     fun saveUserUuid(uuid: String) {
         editor.putString("user_uuid", uuid)
@@ -39,8 +57,25 @@ class SessionManager(context: Context) {
         return sharedPreferences.getString("user_uuid", "")
     }
 
+
+
     // optional helper to clear session (handy)
     fun clear() {
         editor.clear().apply()
     }
+
+
+    fun saveUserRoles(isSwayamsiddha: Boolean, isAdiShakti: Boolean) {
+        editor.putBoolean("IS_SWAYAMSIDHA", isSwayamsiddha)
+        editor.putBoolean("IS_ADISHAKTI", isAdiShakti)
+        editor.commit() // <-- immediate save
+    }
+
+
+    fun isSwayamsiddha(): Boolean =
+        sharedPreferences.getBoolean("IS_SWAYAMSIDHA", false)
+
+    fun isAdiShakti(): Boolean =
+        sharedPreferences.getBoolean("IS_ADISHAKTI", false)
+
 }

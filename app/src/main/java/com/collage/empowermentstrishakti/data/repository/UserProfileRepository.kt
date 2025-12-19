@@ -92,44 +92,91 @@ class UserProfileRepository(
      * @param subRole optional (e.g. STUDENT)
      * @param profileImageUri optional Uri to profile image
      * @param coverImageUri optional Uri to cover image
+     *
+     *
      */
+    private fun rb(value: Any?): RequestBody? {
+        return value?.toString()
+            ?.toRequestBody("text/plain".toMediaTypeOrNull())
+    }
     suspend fun updateUserMultipart(
         userId: Int,
+
+        // ---------- BASIC ----------
         userDateOfBirth: String? = null,
         userAddress: String? = null,
         userFirstName: String? = null,
         userLastName: String? = null,
         orgId: Int? = null,
         subRole: String? = null,
+
+        // ---------- ROLE FLAGS ----------
+        isSwayamsiddha: Boolean? = null,
+        isAdiShakti: Boolean? = null,
+
+        // ---------- SWAYAMSIDHA ----------
+        universityId: Int? = null,
+        collegeId: Int? = null,
+        departmentId: Int? = null,
+        streamId: Int? = null,
+        studyCentreId: Int? = null,
+        schoolId: Int? = null,
+
+        // ---------- ADISHAKTI ----------
+        localBodyType: String? = null,
+        localBodyName: String? = null,
+        wardNo: String? = null,
+
+        // ---------- FILES ----------
         profileImageUri: Uri? = null,
         coverImageUri: Uri? = null
+
     ): Response<UpdateUserResponse> {
+
         val token = sessionManager.getToken() ?: ""
-
-        // build RequestBody parts
-        val dobPart = createPartFromString(userDateOfBirth)
-        val addressPart = createPartFromString(userAddress)
-        val firstNamePart = createPartFromString(userFirstName)
-        val lastNamePart = createPartFromString(userLastName)
-        val orgPart = orgId?.toString()?.let { createPartFromString(it) }
-        val subRolePart = createPartFromString(subRole)
-
-        val profileImagePart = prepareFilePart("userProfileImagePath", profileImageUri)
-        val coverImagePart = prepareFilePart("userCoverProfileImagePath", coverImageUri)
 
         return apiService.updateUserMultipart(
             authorization = "Bearer $token",
             id = userId,
-            userDateOfBirth = dobPart,
-            userAddress = addressPart,
-            userFirstName = firstNamePart,
-            userLastName = lastNamePart,
-            orgId = orgPart,
-            subRole = subRolePart,
-            userProfileImagePath = profileImagePart,
-            userCoverProfileImagePath = coverImagePart
+
+            // basic
+            userDateOfBirth = rb(userDateOfBirth),
+            userAddress = rb(userAddress),
+            userFirstName = rb(userFirstName),
+            userLastName = rb(userLastName),
+            orgId = rb(orgId),
+            subRole = rb(subRole),
+
+            // role flags
+            isSwayamsiddha = rb(isSwayamsiddha),
+            isAdiShakti = rb(isAdiShakti),
+
+            // swayamsidha
+            universityId = rb(universityId),
+            collegeId = rb(collegeId),
+            departmentId = rb(departmentId),
+            streamId = rb(streamId),
+            studyCentreId = rb(studyCentreId),
+            schoolId = rb(schoolId),
+
+            // adishakti
+            localBodyType = rb(localBodyType),
+            localBodyName = rb(localBodyName),
+            wardNo = rb(wardNo),
+
+            // files
+            userProfileImagePath = prepareFilePart(
+                "userProfileImagePath",
+                profileImageUri
+            ),
+            userCoverProfileImagePath = prepareFilePart(
+                "userCoverProfileImagePath",
+                coverImageUri
+            )
         )
     }
+
+
 
     // keep other repos
     suspend fun getAllUserPosts(): List<Reel> {

@@ -234,6 +234,18 @@
             android:fontFamily="sans-serif" />
     </LinearLayout>
 
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnChangeRole"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Become Swayamsiddha / AdiShakti"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        android:backgroundTint="#E3F2FD"
+        android:textColor="#1976D2"
+        android:textStyle="bold"/>
+
+
     <!-- Tabs + ViewPager -->
     <LinearLayout
         android:layout_width="match_parent"

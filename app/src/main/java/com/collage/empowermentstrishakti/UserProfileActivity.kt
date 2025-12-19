@@ -1,21 +1,28 @@
 package com.collage.empowermentstrishakti
+import android.content.Intent
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.collage.empowermentstrishakti.Adapter.UserProfilePagerAdapter
 import com.collage.empowermentstrishakti.Common.SessionManager
+import com.collage.empowermentstrishakti.Common.UserType
 import com.collage.empowermentstrishakti.Factory.FriendListViewModelFactory
 import com.collage.empowermentstrishakti.Factory.UserProfileViewModelFactory
 import com.collage.empowermentstrishakti.data.model.FriendData
+import com.collage.empowermentstrishakti.data.model.Profile.UserProfileResponse
 import com.collage.empowermentstrishakti.data.network.ApiClient
 import com.collage.empowermentstrishakti.data.repository.FriendRepository
 import com.collage.empowermentstrishakti.data.repository.UserProfileRepository
@@ -23,6 +30,7 @@ import com.collage.empowermentstrishakti.databinding.ActivityUserProfileBinding
 import com.collage.empowermentstrishakti.ui.RegisterViewModel.FriendListViewModel
 import com.collage.empowermentstrishakti.ui.RegisterViewModel.UserProfileViewModel
 import com.google.android.material.tabs.TabLayoutMediator
+import kotlin.jvm.java
 
 
 class UserProfileActivity : AppCompatActivity() {
@@ -36,6 +44,11 @@ class UserProfileActivity : AppCompatActivity() {
     private var friendStatus: String? = null
     private var friendRequestId: Int = -1
     private var viewedUserId: Int = -1
+    private val _userProfile = MutableLiveData<UserProfileResponse?>()
+    val userProfile: LiveData<UserProfileResponse?> get() = _userProfile
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,82 +58,105 @@ class UserProfileActivity : AppCompatActivity() {
         setContentView(binding.root)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
 
+        // Window insets
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // ----------------- Initialize session manager first -----------------
         sessionManager = SessionManager(this)
-        Log.d("UserProfileActivity", "SESSION check -> userId=${sessionManager.getUserId()}, uuid='${sessionManager.getuserUuid()}', tokenExists=${!sessionManager.getToken().isNullOrEmpty()}")
 
-        // ----------------- Initialize ViewModels BEFORE using them -----------------
+        // ----------------- ViewModel setup -----------------
         setupViewModel()
         setupFriendViewModel()
-        Log.d("UserProfileActivity", "ViewModels initialized: viewModel=${::viewModel.isInitialized}, friendViewModel=${::friendViewModel.isInitialized}")
 
-        // ----------------- Read Intent extras (may be empty) -----------------
+        // ----------------- Intent & Session -----------------
         val intentUuid = intent.getStringExtra("UUID")?.trim().orEmpty()
         val intentUserId = intent.getIntExtra("USER_ID", -1)
-
-        // ----------------- Session values -----------------
         val sessionUserId = sessionManager.getUserId()
         val sessionUuid = sessionManager.getuserUuid() ?: ""
 
-        // Decide which user to display: prefer intent values if present, otherwise session values
         val targetUserId = if (intentUserId != -1) intentUserId else sessionUserId
         val targetUuid = if (intentUuid.isNotEmpty()) intentUuid else sessionUuid
 
-        // Ensure viewedUserId used by friend logic is set
         viewedUserId = targetUserId
-
-        // Is this the logged-in user's profile?
         val isOwnProfile = (targetUserId == sessionUserId) || (targetUuid.isNotEmpty() && targetUuid == sessionUuid)
 
-        // Debug logs
-        Log.d("UserProfileActivity", "Intent UUID: '$intentUuid', Intent USER_ID: $intentUserId")
-        Log.d("UserProfileActivity", "Session UUID: '$sessionUuid', Session USER_ID: $sessionUserId")
-        Log.d("UserProfileActivity", "Resolved target USER_ID: $targetUserId, target UUID: '$targetUuid'")
-        Log.d("UserProfileActivity", "viewedUserId (set) = $viewedUserId")
-        Log.d("UserProfileActivity", "isOwnProfile = $isOwnProfile")
+        // ----------------- Profile role logic -----------------
+        // Wait until profile fetch is done. Use observer to get User object.
+        viewModel.userProfile.observe(this) { user ->
+            val isSwayamsiddha = user?.isSwayamsiddha ?: false
+            val isAdiShakti = user?.isAdiShakti ?: false
+            val isNormalUser = !isSwayamsiddha && !isAdiShakti
 
-        // Show/hide edit & other-user buttons
+            binding.btnChangeRole.isVisible = isOwnProfile && (isNormalUser || isSwayamsiddha || isAdiShakti)
+
+            binding.btnChangeRole.text = when {
+                isSwayamsiddha -> "Become AdiShakti"
+                isAdiShakti -> "Become Swayamsiddha"
+                else -> "Become Swayamsiddha / AdiShakti"
+            }
+
+            binding.btnChangeRole.setOnClickListener {
+                showRoleSelectionSheet(isSwayamsiddha, isAdiShakti)
+            }
+        }
+
+
         binding.ivEditProfile.isVisible = isOwnProfile
         binding.otherUserButtonsLayout.isVisible = !isOwnProfile
 
-        // Set up ViewPager with resolved values
         setupViewPager(targetUuid, targetUserId, isOwnProfile)
-
-        // Observers (attach after viewModels are initialized)
         setupObservers()
         setupFriendObservers()
         setupFriendButtons()
 
-        // ----------------- Guarded single profile fetch -----------------
-        val finalUuid = targetUuid.ifEmpty {
-            Log.w("UserProfileActivity", "targetUuid empty; falling back to sessionUuid='${sessionUuid}'")
-            sessionUuid
+        // Fetch profile
+        if (targetUuid.isNotEmpty()) {
+            viewModel.fetchUserProfile(targetUuid)
         }
 
-        if (finalUuid.isNotEmpty()) {
-            Log.d("UserProfileActivity", "Fetching profile for uuid='$finalUuid'")
-            viewModel.fetchUserProfile(finalUuid)
-        } else {
-            Log.w("UserProfileActivity", "No UUID available to fetch profile. targetUserId=$targetUserId")
-            // Optional: if backend supports fetching by numeric id, you can call:
-            // viewModel.fetchUserProfileById(targetUserId)
-        }
-
-        // Fetch friend list for the logged-in user so we can determine relation to viewedUserId
+        // Fetch friend list
         if (sessionUserId != -1) {
             friendViewModel.fetchFriendsList(sessionUserId)
-        } else {
-            Log.w("UserProfileActivity", "sessionUserId is invalid (-1); friend list fetch skipped")
         }
 
         binding.ivBack.setOnClickListener { finish() }
     }
+
+
+    private fun showRoleSelectionSheet(isSwayamsiddha: Boolean, isAdiShakti: Boolean) {
+        val sheet = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottomsheet_select_role, null)
+
+        val tvSwayam = view.findViewById<TextView>(R.id.tvChooseSwayam)
+        val tvAdi = view.findViewById<TextView>(R.id.tvChooseAdi)
+
+        // If user is already Swayamsiddha, disable that option (or hide)
+        tvSwayam.isEnabled = !isSwayamsiddha
+        tvAdi.isEnabled = !isAdiShakti
+
+        tvSwayam.setOnClickListener {
+            openRoleForm(UserType.SWAYAMSIDHA)
+            sheet.dismiss()
+        }
+
+        tvAdi.setOnClickListener {
+            openRoleForm(UserType.ADISHAKTI)
+            sheet.dismiss()
+        }
+
+        sheet.setContentView(view)
+        sheet.show()
+    }
+
+    private fun openRoleForm(type: UserType) {
+        val intent = Intent(this, RoleFormActivity::class.java)
+        intent.putExtra("USER_TYPE", type.name)
+        startActivity(intent)
+    }
+
 
     // ---------------- ViewModel setup ----------------
     private fun setupViewModel() {

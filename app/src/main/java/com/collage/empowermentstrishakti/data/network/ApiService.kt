@@ -571,17 +571,43 @@ interface ApiService {
     suspend fun updateUserMultipart(
         @Header("Authorization") authorization: String,
         @Path("id") id: Int,
-        // text parts as RequestBody
+
+        // ---------- BASIC FIELDS ----------
         @Part("userDateOfBirth") userDateOfBirth: RequestBody?,
         @Part("userAddress") userAddress: RequestBody?,
         @Part("userFirstName") userFirstName: RequestBody?,
         @Part("userLastName") userLastName: RequestBody?,
         @Part("orgId") orgId: RequestBody?,
         @Part("subRole") subRole: RequestBody?,
-        // file parts (may be null)
+
+        // ---------- ROLE FLAGS ----------
+        @Part("isSwayamsiddha") isSwayamsiddha: RequestBody?,
+        @Part("isAdiShakti") isAdiShakti: RequestBody?,
+
+        // ---------- SWAYAMSIDHA ----------
+        @Part("universityId") universityId: RequestBody?,
+        @Part("collegeId") collegeId: RequestBody?,
+        @Part("departmentId") departmentId: RequestBody?,
+        @Part("streamId") streamId: RequestBody?,
+        @Part("studyCentreId") studyCentreId: RequestBody?,
+        @Part("schoolId") schoolId: RequestBody?,
+
+        // ---------- ADISHAKTI ----------
+        @Part("localBodyType") localBodyType: RequestBody?,
+        @Part("localBodyName") localBodyName: RequestBody?,
+        @Part("wardNo") wardNo: RequestBody?,
+
+        // ---------- FILES ----------
         @Part userProfileImagePath: MultipartBody.Part?,
         @Part userCoverProfileImagePath: MultipartBody.Part?
+
     ): Response<UpdateUserResponse>
+
+
+
+
+
+
     //group
     @GET("ssakti/users/group/getGroups/{userId}")
     suspend fun getGroups(
