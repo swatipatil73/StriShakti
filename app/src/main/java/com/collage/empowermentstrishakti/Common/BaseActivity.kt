@@ -15,6 +15,7 @@ import com.collage.empowermentstrishakti.AllAdsActivity
 import com.collage.empowermentstrishakti.BookmarkActivity
 import com.collage.empowermentstrishakti.EventListActivity
 import com.collage.empowermentstrishakti.FriendListActivity
+import com.collage.empowermentstrishakti.GroupListActivity
 import com.collage.empowermentstrishakti.LoginActivity
 import com.collage.empowermentstrishakti.NotificationActivity
 import com.collage.empowermentstrishakti.PageListActivity
@@ -100,6 +101,11 @@ abstract class BaseActivity : AppCompatActivity() {
                 R.id.nav_chat -> {        // Chat menu
                     val intent = Intent(this, FriendListActivity::class.java)
                     intent.putExtra("MODE", "CHAT")      // <-- important
+                    startActivity(intent)
+                }
+                R.id.group -> {        // Chat menu
+                    val intent = Intent(this, GroupListActivity::class.java)
+                        // <-- important
                     startActivity(intent)
                 }
                 R.id.delete -> {

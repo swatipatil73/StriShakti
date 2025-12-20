@@ -13,7 +13,7 @@ class GroupChatHistoryMapper {
                 groupId = it.groupId,
                 content = it.lastMessageContent,
                 senderId = it.lastMessageSenderId,
-                senderName = it.lastMessageSenderName,
+                lastMessageSenderName = it.lastMessageSenderName,
                 timestamp = it.lastMessageTimestamp,
                 isMine = it.lastMessageSenderId == myUserId
             )

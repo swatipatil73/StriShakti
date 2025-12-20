@@ -5,7 +5,7 @@ data class GroupChatMessage(
     val groupId: Int,
     val content: String,
     val senderId: Int,
-    val senderName: String,
+    val lastMessageSenderName: String,
     val timestamp: String,
     val isMine: Boolean
 )

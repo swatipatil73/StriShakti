@@ -54,13 +54,14 @@ class GroupChatAdapter(
 
         when (holder) {
             is LeftVH -> {
-                holder.tvSender.text = msg.senderName
+                holder.tvSender.text = msg.lastMessageSenderName
                 holder.tvMessage.text = msg.content
                 holder.tvTime.text = formatTime(msg.timestamp)
             }
 
             is RightVH -> {
                 holder.tvMessage.text = msg.content
+                holder.tvSender.text = msg.lastMessageSenderName
                 holder.tvTime.text = formatTime(msg.timestamp)
             }
         }
@@ -110,6 +111,7 @@ class GroupChatAdapter(
     }
 
     class RightVH(v: View) : RecyclerView.ViewHolder(v) {
+        val tvSender: TextView = v.findViewById(R.id.tvSender)
         val tvMessage: TextView = v.findViewById(R.id.tvMessage)
         val tvTime: TextView = v.findViewById(R.id.tvTime)
     }

@@ -17,7 +17,7 @@
         android:id="@+id/event"
         android:title="Event"
 
-        android:icon="@drawable/baseline_comment_24"
+        android:icon="@drawable/outline_event_upcoming_24"
         />
 
 
@@ -32,14 +32,14 @@
         android:id="@+id/page"
         android:title="Pages"
 
-        android:icon="@drawable/baseline_calendar_month_24" />
+        android:icon="@drawable/outline_assignment_24" />
 
 
     <item
         android:id="@+id/notification"
         android:title="Notification"
 
-        android:icon="@drawable/bell" />
+        android:icon="@drawable/outline_notifications_active_24" />
 
     <item
         android:id="@+id/allads"
@@ -50,12 +50,19 @@
         android:id="@+id/newprofile"
         android:title="User Profile"
 
-        android:icon="@drawable/baseline_color_lens_24" />
+        android:icon="@drawable/outline_person_edit_24" />
     <item
         android:id="@+id/nav_chat"
         android:title="Chat"
 
-        android:icon="@drawable/baseline_color_lens_24" />
+        android:icon="@drawable/baseline_comment_24" />
+
+
+    <item
+        android:id="@+id/group"
+        android:title="Group"
+
+        android:icon="@drawable/outline_groups_2_24" />
     <item
         android:id="@+id/delete"
         android:title="Account Delete"

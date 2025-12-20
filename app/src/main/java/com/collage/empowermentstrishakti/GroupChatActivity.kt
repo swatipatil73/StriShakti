@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
 
 class GroupChatActivity : AppCompatActivity() {
 
+
+
     private lateinit var rvChat: RecyclerView
     private lateinit var etMessage: EditText
     private lateinit var ivSend: ImageView
@@ -175,7 +177,7 @@ class GroupChatActivity : AppCompatActivity() {
                         groupId = groupId,
                         content = socketMsg.content,
                         senderId = socketMsg.sender.userId,
-                        senderName = socketMsg.sender.userName ?: "Member",
+                        lastMessageSenderName = socketMsg.sender.userName ?: "Member",
                         timestamp = socketMsg.timestamp ?: "",
                         isMine = socketMsg.sender.userId == myUserId
                     )
@@ -230,7 +232,7 @@ class GroupChatActivity : AppCompatActivity() {
             groupId = groupId,
             content = text,
             senderId = myUserId,
-            senderName = "You",
+            lastMessageSenderName = "You",
             timestamp = "",
             isMine = true
         )
