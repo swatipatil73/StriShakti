@@ -14,7 +14,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatButton
 import androidx.lifecycle.Observer
 import com.collage.empowermentstrishakti.Common.BaseActivity
+import com.collage.empowermentstrishakti.Common.SessionManager
 import com.collage.empowermentstrishakti.Common.UserType
+import com.collage.empowermentstrishakti.Factory.RegisterViewModelFactory
 import com.collage.empowermentstrishakti.R
 import com.collage.empowermentstrishakti.data.model.regi.College
 import com.collage.empowermentstrishakti.data.model.regi.Department
@@ -26,13 +28,27 @@ import com.collage.empowermentstrishakti.data.model.regi.StreamItem
 import com.collage.empowermentstrishakti.data.model.regi.StudyCentre
 import com.collage.empowermentstrishakti.data.model.regi.Taluka
 import com.collage.empowermentstrishakti.data.model.regi.University
+import com.collage.empowermentstrishakti.data.network.ApiClient
+import com.collage.empowermentstrishakti.data.repository.UserProfileRepository
 import com.collage.empowermentstrishakti.ui.RegisterViewModel.RegisterViewModel
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import java.util.*
 
 class RegisterActivity : BaseActivity() {
-    val viewModel: RegisterViewModel by viewModels()
+  //  val viewModel: RegisterViewModel by viewModels()
+  private val viewModel: RegisterViewModel by viewModels {
+      val apiService = ApiClient.apiService
+      val sessionManager = SessionManager(applicationContext)
+      val repository = UserProfileRepository(
+          api = apiService,
+          sessionManager = sessionManager,
+          appContext = applicationContext
+      )
+      RegisterViewModelFactory(repository)
+  }
+
+
     private lateinit var userType: UserType
 
     // UI elements
@@ -495,10 +511,15 @@ class RegisterActivity : BaseActivity() {
     }
 
     private fun registerUser() {
-        val selectedDisplayValue = spinnerLocalBodyType.selectedItem.toString()
+        val backendLocalBodyType: String? =
+            if (userType == UserType.ADISHAKTI &&
+                spinnerLocalBodyType.selectedItem != null
+            ) {
+                localBodyTypeMap[spinnerLocalBodyType.selectedItem.toString()]
+            } else {
+                null
+            }
 
-        val backendLocalBodyType =
-            localBodyTypeMap[selectedDisplayValue]
 
         // ================= COMMON VALIDATION =================
         if (firstName.text.isNullOrBlank() ||
@@ -526,6 +547,7 @@ class RegisterActivity : BaseActivity() {
         // ================= ADISHAKTI VALIDATION =================
         if (userType == UserType.ADISHAKTI) {
             if (backendLocalBodyType == null ||
+                spinnerLocalBodyType.selectedItemPosition == 0 ||
                 etLocalBodyName.text.isNullOrBlank() ||
                 etWardNo.text.isNullOrBlank()
             ) {
@@ -533,6 +555,7 @@ class RegisterActivity : BaseActivity() {
                 return
             }
         }
+
 
 
 

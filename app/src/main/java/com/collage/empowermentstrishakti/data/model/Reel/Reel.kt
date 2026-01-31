@@ -4,7 +4,7 @@ data class Reel(
     val userProfileImageUrl: String?,
     val postCreatedAt: String?,
     val postType: String?,
-    val trendingScore: Int?,
+    val trendingScore: Double?,
     val description: String?,
     val postId: Int,
     val postImageURl: String?,

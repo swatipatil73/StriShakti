@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.collage.empowermentstrishakti.data.model.Profile.VideoPopupFragment
 import com.collage.empowermentstrishakti.data.model.Reel.Reel
 
 
@@ -35,15 +36,28 @@ class PostGridAdapter : RecyclerView.Adapter<PostGridAdapter.PostViewHolder>() {
         private val imgTypeIcon: ImageView = itemView.findViewById(R.id.imgTypeIcon)
 
         fun bind(reel: Reel) {
-            // Load image or video thumbnail
+            // Load thumbnail
             Glide.with(imgPostMedia.context)
-                .load(reel.postImageURl)
+                .load(reel.videoThumbnailUrl ?: reel.postImageURl)
                 .centerCrop()
-                .placeholder(R.drawable.strishaktilogo) // optional placeholder
+                .placeholder(R.drawable.strishaktilogo)
                 .into(imgPostMedia)
 
-            // Show video icon if postType contains "video"
+            // Show video icon if it's a video
             imgTypeIcon.visibility = if (reel.postType?.contains("video") == true) View.VISIBLE else View.GONE
+
+            // Click to open video popup
+            itemView.setOnClickListener {
+                if (reel.postType?.contains("video") == true && !reel.postImageURl.isNullOrEmpty()) {
+                    val fragmentManager = (itemView.context as? androidx.fragment.app.FragmentActivity)?.supportFragmentManager
+                    fragmentManager?.let { fm ->
+                        val videoPopup = VideoPopupFragment.newInstance(reel.postImageURl!!)
+                        videoPopup.show(fm, "video_popup")
+                    }
+                }
+            }
+
         }
     }
+
 }

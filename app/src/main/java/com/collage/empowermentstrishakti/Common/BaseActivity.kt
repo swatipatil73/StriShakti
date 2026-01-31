@@ -40,6 +40,25 @@ abstract class BaseActivity : AppCompatActivity() {
 
     }
 
+    private fun checkSession() {
+        if (!baseSessionManager.isLoggedIn()) {
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        }
+    }
+
+
+
+
+    override fun onResume() {
+        super.onResume()
+        checkSession()
+    }
+
+
     fun setupToolbar(
         title: String,
         showSearch: Boolean = false,

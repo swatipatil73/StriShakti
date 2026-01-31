@@ -2,6 +2,7 @@ package com.collage.empowermentstrishakti.data.repository
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.collage.empowermentstrishakti.Common.SessionManager
 import com.collage.empowermentstrishakti.data.model.Profile.OrgDetailsResponse
 import com.collage.empowermentstrishakti.data.model.Profile.UpdateUserRequest
@@ -179,31 +180,80 @@ class UserProfileRepository(
 
 
     // keep other repos
+//    suspend fun getAllUserPosts(): List<Reel> {
+//        val token = "Bearer ${sessionManager.getToken()}"
+//        val response = api.getReels(token, page = 0, size = 10)
+//        val posts = response.postsData ?: emptyList()
+//        return posts.map { reel ->
+//            reel.copy(
+//                userProfileImageUrl = reel.userProfileImageUrl ?: "",
+//                postType = reel.postType ?: "",
+//                description = reel.description ?: "",
+//                postImageURl = reel.postImageURl ?: "",
+//                userName = reel.userName ?: "",
+//                postUploadedAt = reel.postUploadedAt ?: "",
+//                videoThumbnailUrl = reel.videoThumbnailUrl ?: "",
+//                postName = reel.postName ?: "",
+//                userUUID = reel.userUUID ?: "",
+//                totalCountOFReact = reel.totalCountOFReact ?: 0,
+//                totalComments = reel.totalComments ?: 0,
+//                totalViews = reel.totalViews ?: 0,
+//                postSaved = reel.postSaved ?: false,
+//                userReactStatus = reel.userReactStatus ?: false,
+//                topComments = reel.topComments ?: emptyList(),
+//                commentsAndReacts = reel.commentsAndReacts ?: emptyList()
+//            )
+//        }
+//    }
+
+
     suspend fun getAllUserPosts(): List<Reel> {
         val token = "Bearer ${sessionManager.getToken()}"
-        val response = api.getReels(token, page = 0, size = 1000)
-        val posts = response.postsData ?: emptyList()
-        return posts.map { reel ->
-            reel.copy(
-                userProfileImageUrl = reel.userProfileImageUrl ?: "",
-                postType = reel.postType ?: "",
-                description = reel.description ?: "",
-                postImageURl = reel.postImageURl ?: "",
-                userName = reel.userName ?: "",
-                postUploadedAt = reel.postUploadedAt ?: "",
-                videoThumbnailUrl = reel.videoThumbnailUrl ?: "",
-                postName = reel.postName ?: "",
-                userUUID = reel.userUUID ?: "",
-                totalCountOFReact = reel.totalCountOFReact ?: 0,
-                totalComments = reel.totalComments ?: 0,
-                totalViews = reel.totalViews ?: 0,
-                postSaved = reel.postSaved ?: false,
-                userReactStatus = reel.userReactStatus ?: false,
-                topComments = reel.topComments ?: emptyList(),
-                commentsAndReacts = reel.commentsAndReacts ?: emptyList()
-            )
+        val allPosts = mutableListOf<Reel>()
+        var page = 0
+        var hasNextPage = true
+
+        while (hasNextPage) {
+            try {
+                val response = api.getReels(token, page = page, size = 10) // safe size
+                val posts = response.postsData ?: emptyList()
+
+                allPosts.addAll(
+                    posts.map { reel ->
+                        reel.copy(
+                            userProfileImageUrl = reel.userProfileImageUrl ?: "",
+                            postType = reel.postType ?: "",
+                            description = reel.description ?: "",
+                            postImageURl = reel.postImageURl ?: "",
+                            userName = reel.userName ?: "",
+                            postUploadedAt = reel.postUploadedAt ?: "",
+                            videoThumbnailUrl = reel.videoThumbnailUrl ?: "",
+                            postName = reel.postName ?: "",
+                            userUUID = reel.userUUID ?: "",
+                            totalCountOFReact = reel.totalCountOFReact ?: 0,
+                            totalComments = reel.totalComments ?: 0,
+                            totalViews = reel.totalViews ?: 0,
+                            postSaved = reel.postSaved ?: false,
+                            userReactStatus = reel.userReactStatus ?: false,
+                            topComments = reel.topComments ?: emptyList(),
+                            commentsAndReacts = reel.commentsAndReacts ?: emptyList()
+                        )
+                    }
+                )
+
+                hasNextPage = response.hasNextPage
+                page = response.nextPageNo ?: (page + 1)
+            } catch (e: Exception) {
+                Log.e("UserProfileRepo", "Error fetching page $page: ${e.message}")
+                hasNextPage = false
+            }
         }
+
+        return allPosts
     }
+
+
+
     private fun authHeader(): String {
         // sessionManager.getToken() should return raw token (without "Bearer ")
         val token = sessionManager.getToken().orEmpty()

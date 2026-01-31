@@ -138,6 +138,20 @@ class UserProfileViewModel(
 
 
 
+//    fun fetchUserPosts() {
+//        viewModelScope.launch {
+//            _isLoading.value = true
+//            try {
+//                val posts = repository.getAllUserPosts()
+//                _userPosts.value = posts
+//            } catch (e: Exception) {
+//                _error.value = e.message
+//            } finally {
+//                _isLoading.value = false
+//            }
+//        }
+//    }
+    //
     fun fetchUserPosts() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -145,10 +159,12 @@ class UserProfileViewModel(
                 val posts = repository.getAllUserPosts()
                 _userPosts.value = posts
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = e.message ?: "Unknown error"
+                Log.e("UserProfileViewModel", "Error fetching posts: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
+
 }

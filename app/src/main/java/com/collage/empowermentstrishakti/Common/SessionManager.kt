@@ -43,6 +43,10 @@ class SessionManager(context: Context) {
     fun getUserId(): Int {
         return sharedPreferences.getInt("user_id", -1)
     }
+    fun isLoggedIn(): Boolean {
+        return !getToken().isNullOrEmpty()
+    }
+
 
     fun getUserName(): String? {
         return sharedPreferences.getString("user_name", "")

@@ -23,6 +23,7 @@ import com.collage.empowermentstrishakti.data.network.ApiClient
 import com.collage.empowermentstrishakti.R
 
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.collage.empowermentstrishakti.Common.BaseActivity
 import com.collage.empowermentstrishakti.Common.SessionManager
@@ -34,7 +35,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class LoginActivity : BaseActivity() {
+class LoginActivity:  AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
 
     private lateinit var etEmailOrPhone: EditText
@@ -53,6 +54,12 @@ class LoginActivity : BaseActivity() {
         }
 
         sessionManager = SessionManager(this)
+
+        if (sessionManager.isLoggedIn()) {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+            return
+        }
 
         etEmailOrPhone = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
@@ -156,13 +163,17 @@ class LoginActivity : BaseActivity() {
                     Log.d("ssswwe2", "Saved flags -> isSwayamsiddha=${sessionManager.isSwayamsiddha()}, isAdiShakti=${sessionManager.isAdiShakti()}")
 
                     // Save in SharedPreferences (SessionManager)
-                    sessionManager.saveUserData(
-                        userId = userId,
-                        userName = userName,
-                        token = token
+//                    sessionManager.saveUserData(
+//                        userId = userId,
+//                        userName = userName,
+//                        token = token
+//
+//
+//                    )
 
 
-                    )
+                    sessionManager.saveUserData(userId, userName, token)
+
                     sessionManager.saveUserUuid(uuid)
                     // Save UUID separately (you added this helper)
 
@@ -243,5 +254,9 @@ class LoginActivity : BaseActivity() {
         intent.putExtra("USER_TYPE", userType.name)
         startActivity(intent)
     }
+
+
+
+
 
 }
