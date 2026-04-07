@@ -59,6 +59,9 @@ import retrofit2.Response
 
 import android.content.Intent
 import android.content.IntentSender
+import android.util.Log
+import androidx.appcompat.app.AlertDialog
+import com.collage.empowermentstrishakti.data.model.post.PostData
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
@@ -164,28 +167,47 @@ class MainActivity : BaseActivity() {
         val appUpdateInfoTask = appUpdateManager.appUpdateInfo
 
         appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
                 appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
             ) {
-                try {
-                    appUpdateManager.startUpdateFlowForResult(
-                        appUpdateInfo,
-                        AppUpdateType.IMMEDIATE,
-                        this,
-                        REQUEST_CODE_UPDATE
-                    )
-                } catch (e: IntentSender.SendIntentException) {
-                    e.printStackTrace()
-                }
+
+                // 🔥 Show dialog first
+                AlertDialog.Builder(this)
+                    .setTitle("Update Available")
+                    .setMessage("A new version of the app is available. Please update to continue.")
+                    .setCancelable(false)
+                    .setPositiveButton("Update") { _, _ ->
+                        try {
+                            appUpdateManager.startUpdateFlowForResult(
+                                appUpdateInfo,
+                                AppUpdateType.IMMEDIATE,
+                                this,
+                                REQUEST_CODE_UPDATE
+                            )
+                        } catch (e: IntentSender.SendIntentException) {
+                            e.printStackTrace()
+                        }
+                    }
+                    .show()
             }
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
+
+    ) {
         super.onActivityResult(requestCode, resultCode, data)
+
         if (requestCode == REQUEST_CODE_UPDATE) {
-            if (resultCode != Activity.RESULT_OK) {
-                Toast.makeText(this, "Update failed or canceled!", Toast.LENGTH_SHORT).show()
+            if (resultCode != RESULT_OK) {
+                Toast.makeText(this, "Update required to continue!", Toast.LENGTH_SHORT).show()
+
+                // 🔁 Try again (force update)
+                checkForUpdate()
             }
         }
     }
@@ -203,20 +225,22 @@ class MainActivity : BaseActivity() {
         recyclerView.setHasFixedSize(true)
         recyclerView.setItemViewCacheSize(10)
 
-
-
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            private var lastTriggerTime = 0L
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-                val now = System.currentTimeMillis()
-                if (now - lastTriggerTime < 350) return   // 👈 debounce
+                val layoutManager = rv.layoutManager as LinearLayoutManager
 
-                val lm = rv.layoutManager as LinearLayoutManager
-                val lastVisible = lm.findLastVisibleItemPosition()
-                val total = lm.itemCount
+                val firstVisible = layoutManager.findFirstCompletelyVisibleItemPosition()
 
-                if (!isLoading && hasNextPage && lastVisible >= total - 2) {
-                    lastTriggerTime = now
+                // If user reached top → refresh
+                if (firstVisible == 0 && !isLoading) {
+                    nextCursor = 0L
+                    hasNextPage = true
+                    loadHomePosts()
+                }
+
+                val lastVisible = layoutManager.findLastVisibleItemPosition()
+
+                if (lastVisible >= adapter.itemCount - 2 && !isLoading && hasNextPage) {
                     loadHomePosts()
                 }
             }
@@ -311,12 +335,8 @@ class MainActivity : BaseActivity() {
             }
         }
     }
-
-
-
-
-
     private fun loadHomePosts() {
+
         if (isLoading || !hasNextPage) return
         isLoading = true
 
@@ -326,6 +346,7 @@ class MainActivity : BaseActivity() {
             emptyTextView.visibility = View.GONE
         } else {
             Handler(Looper.getMainLooper()).post { adapter.showLoading() }
+            Log.d("POST_FLOW", "getHomePosts API called, cursor=$nextCursor")
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
@@ -333,14 +354,17 @@ class MainActivity : BaseActivity() {
                 val cursor = nextCursor ?: 0L
                 val size = if (isFirstPage) pageSizeFirst else pageSizeNext
 
-                // ── 1) Posts with safeApiCall
                 val result = safeApiCall { apiService.getHomePosts(userId, cursor, size, token) }
 
                 result.onFailure { error ->
                     withContext(Dispatchers.Main) {
                         adapter.hideLoading()
                         progressBar.visibility = View.GONE
-                        Toast.makeText(this@MainActivity, error.message ?: "Failed to load posts", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@MainActivity,
+                            error.message ?: "Failed to load posts",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     return@launch
                 }
@@ -350,20 +374,29 @@ class MainActivity : BaseActivity() {
                 nextCursor = body.nextCursor
                 hasNextPage = body.hasNextPage == true
 
-                // ── 2) FIRST: show posts immediately (UI thread)
                 withContext(Dispatchers.Main) {
-                    val updated = adapter.currentList.toMutableList()
-                    updated.removeAll { it is HomeFeedItem.LoadingItem }
-                    updated.addAll(posts.map { HomeFeedItem.PostItem(it) })
+
+                    val updated = if (cursor == 0L) {
+                        posts.map { HomeFeedItem.PostItem(it) }.toMutableList()
+
+                    } else {
+                        val list = adapter.currentList.toMutableList()
+                        list.removeAll { it is HomeFeedItem.LoadingItem }
+                        list.addAll(posts.map { HomeFeedItem.PostItem(it) })
+                        list
+                    }
                     adapter.submitList(updated)
                     progressBar.visibility = View.GONE
-                    emptyTextView.visibility = if (updated.isEmpty()) View.VISIBLE else View.GONE
+                    emptyTextView.visibility =
+                        if (updated.isEmpty()) View.VISIBLE else View.GONE
                 }
 
-                // ── 3) THEN: fetch reels asynchronously (only for first page)
+                // load reels for first page
                 if (cursor == 0L) {
                     launch(Dispatchers.IO) {
-                        val reelsResult = safeApiCall { apiService.getAllReels(0, 5, token) }
+                        val reelsResult =
+                            safeApiCall { apiService.getAllReels(0, 5, token) }
+
                         reelsResult.onSuccess { reelsResp ->
                             val reels = reelsResp.postsData.orEmpty()
                             if (reels.isNotEmpty()) {
@@ -375,12 +408,16 @@ class MainActivity : BaseActivity() {
                                 }
                             }
                         }
-                        // onFailure: ignore silently; feed already visible
                     }
                 }
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Error: ${e.localizedMessage}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } finally {
                 withContext(Dispatchers.Main) {
@@ -390,6 +427,85 @@ class MainActivity : BaseActivity() {
             }
         }
     }
+
+
+
+
+//
+//    private fun loadHomePosts() {
+//        if (isLoading || !hasNextPage) return
+//        isLoading = true
+//
+//        val isFirstPage = nextCursor == 0L
+//        if (isFirstPage) {
+//            progressBar.visibility = View.VISIBLE
+//            emptyTextView.visibility = View.GONE
+//        } else {
+//            Handler(Looper.getMainLooper()).post { adapter.showLoading() }
+//        }
+//
+//        lifecycleScope.launch(Dispatchers.IO) {
+//            try {
+//                val cursor = nextCursor ?: 0L
+//                val size = if (isFirstPage) pageSizeFirst else pageSizeNext
+//
+//                // ── 1) Posts with safeApiCall
+//                val result = safeApiCall { apiService.getHomePosts(userId, cursor, size, token) }
+//
+//                result.onFailure { error ->
+//                    withContext(Dispatchers.Main) {
+//                        adapter.hideLoading()
+//                        progressBar.visibility = View.GONE
+//                        Toast.makeText(this@MainActivity, error.message ?: "Failed to load posts", Toast.LENGTH_SHORT).show()
+//                    }
+//                    return@launch
+//                }
+//
+//                val body = result.getOrNull()!!
+//                val posts = body.postsData ?: emptyList()
+//                nextCursor = body.nextCursor
+//                hasNextPage = body.hasNextPage == true
+//
+//                // ── 2) FIRST: show posts immediately (UI thread)
+//                withContext(Dispatchers.Main) {
+//                    val updated = adapter.currentList.toMutableList()
+//                    updated.removeAll { it is HomeFeedItem.LoadingItem }
+//                    updated.addAll(posts.map { HomeFeedItem.PostItem(it) })
+//                    adapter.submitList(updated)
+//                    progressBar.visibility = View.GONE
+//                    emptyTextView.visibility = if (updated.isEmpty()) View.VISIBLE else View.GONE
+//                }
+//
+//                // ── 3) THEN: fetch reels asynchronously (only for first page)
+//                if (cursor == 0L) {
+//                    launch(Dispatchers.IO) {
+//                        val reelsResult = safeApiCall { apiService.getAllReels(0, 5, token) }
+//                        reelsResult.onSuccess { reelsResp ->
+//                            val reels = reelsResp.postsData.orEmpty()
+//                            if (reels.isNotEmpty()) {
+//                                withContext(Dispatchers.Main) {
+//                                    val list = adapter.currentList.toMutableList()
+//                                    val insertIndex = if (list.size >= 5) 5 else list.size
+//                                    list.add(insertIndex, HomeFeedItem.ReelSection(reels))
+//                                    adapter.submitList(list)
+//                                }
+//                            }
+//                        }
+//                        // onFailure: ignore silently; feed already visible
+//                    }
+//                }
+//            } catch (e: Exception) {
+//                withContext(Dispatchers.Main) {
+//                    Toast.makeText(this@MainActivity, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+//                }
+//            } finally {
+//                withContext(Dispatchers.Main) {
+//                    adapter.hideLoading()
+//                    isLoading = false
+//                }
+//            }
+//        }
+//    }
 
     // Call this from lifecycleScope.launch { val ok = loadAnnouncementAndAdsAndShowPopup() }
     private suspend fun loadAnnouncementAndAdsAndShowPopup(): Boolean {
@@ -542,16 +658,35 @@ class MainActivity : BaseActivity() {
 
     override fun onCreateClicked() {
 
-
-
         val dialog = CreatePostDialogFragment()
+
         dialog.onPostCreatedListener = object : OnPostCreatedListener {
             override fun onPostCreated() {
-                refreshFeed()
+                Log.d("POST_FLOW", "Listener received — reloading feed")
+                forceReloadFeed()   // now calls Activity method
             }
         }
+
         dialog.show(supportFragmentManager, "CreatePost")
     }
+
+    private fun forceReloadFeed() {
+
+        Log.d("POST_FLOW", "Force reload started")
+
+        nextCursor = 0L
+        hasNextPage = true
+        isLoading = false
+        firstPageHandled = false
+
+        adapter.submitList(emptyList())
+        recyclerView.scrollToPosition(0)
+
+        loadHomePosts()
+    }
+
+
+
 
     private fun refreshFeed() {
         nextCursor = 0L
@@ -560,4 +695,18 @@ class MainActivity : BaseActivity() {
         progressBar.visibility = View.VISIBLE
         loadHomePosts()
     }
+
+
+
+    override fun onResume() {
+        super.onResume()
+
+        // Reset pagination to reload fresh data
+        nextCursor = 0L
+        hasNextPage = true
+
+        loadHomePosts()
+    }
+
+
 }

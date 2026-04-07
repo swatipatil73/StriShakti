@@ -12,13 +12,13 @@ android {
         applicationId = "com.collage.empowermentstrishakti"
         minSdk = 26
         targetSdk = 36
-        versionCode = 30
+        versionCode = 35
 
 
 
 
 
-        versionName = "6.6"
+        versionName = "8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

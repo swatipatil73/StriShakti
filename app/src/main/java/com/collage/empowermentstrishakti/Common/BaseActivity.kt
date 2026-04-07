@@ -17,6 +17,7 @@ import com.collage.empowermentstrishakti.EventListActivity
 import com.collage.empowermentstrishakti.FriendListActivity
 import com.collage.empowermentstrishakti.GroupListActivity
 import com.collage.empowermentstrishakti.LoginActivity
+import com.collage.empowermentstrishakti.MainActivity
 import com.collage.empowermentstrishakti.NotificationActivity
 import com.collage.empowermentstrishakti.PageListActivity
 import com.collage.empowermentstrishakti.R
@@ -81,6 +82,10 @@ abstract class BaseActivity : AppCompatActivity() {
         // Handle drawer item clicks
         navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
+                R.id.home2 -> {
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                }
                 R.id.reel -> {
                     val intent = Intent(this, ReelActivity::class.java)
                     startActivity(intent)

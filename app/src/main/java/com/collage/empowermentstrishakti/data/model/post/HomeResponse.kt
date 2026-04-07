@@ -32,6 +32,7 @@ data class PostData(
     val postSaved: Boolean,
     var isLikedByUser: Int,
     val mediaFiles: List<MediaFile>
+
 )
 
 data class MediaFile(

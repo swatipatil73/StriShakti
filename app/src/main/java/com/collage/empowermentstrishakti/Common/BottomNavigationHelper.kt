@@ -31,7 +31,10 @@ object BottomNavigationHelper {
 
             when (item.itemId) {
                 R.id.nav_home -> {
-                    activity.startActivity(Intent(activity, MainActivity::class.java))
+                    val intent = Intent(activity, MainActivity::class.java)
+                    //intent.flags =
+                      //  Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    activity.startActivity(intent)
                 }
                 R.id.nav_search -> {
 //activity.startActivity(Intent(activity, SearchActivity::class.java))

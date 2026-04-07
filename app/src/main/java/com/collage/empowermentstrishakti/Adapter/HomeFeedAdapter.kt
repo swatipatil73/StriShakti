@@ -32,8 +32,12 @@ import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.lang.reflect.Field
+import java.text.SimpleDateFormat
 
 
+
+import java.util.*
+import java.util.concurrent.TimeUnit
 class HomeFeedAdapter(
     private val sharedReelPlayer: ExoPlayer,
     private val coroutineScope: CoroutineScope,
@@ -119,6 +123,9 @@ class HomeFeedAdapter(
 
         private val imgProfile: CircleImageView = itemView.findViewById(R.id.imgProfile)
         private val tvUsername: TextView = itemView.findViewById(R.id.tvUsername)
+        private val tvTimeAgo: TextView = itemView.findViewById(R.id.tvTimeAgo)
+
+
         private val tvCaption: TextView = itemView.findViewById(R.id.tvCaption)
         private var imgLike: ImageView = itemView.findViewById(R.id.imgLike)
         private var tvLikeCount: TextView = itemView.findViewById(R.id.tvLikeCount)
@@ -143,6 +150,7 @@ class HomeFeedAdapter(
 
             tvUsername.text = post.userName ?: "Unknown User"
             tvCaption.text = post.postName ?: ""
+            tvTimeAgo.text = getTimeAgo(post.postCreatedAt)
 
 
             // --- Likes ---
@@ -398,6 +406,39 @@ class HomeFeedAdapter(
             }
 
 
+        }
+
+        fun getTimeAgo(postCreatedAt: String?): String {
+            if (postCreatedAt == null) return ""
+
+            return try {
+                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+
+                val postDate: Date = sdf.parse(postCreatedAt) ?: return ""
+                val now = Date()
+
+                val diffInMillis = now.time - postDate.time
+
+                val seconds = TimeUnit.MILLISECONDS.toSeconds(diffInMillis)
+                val minutes = TimeUnit.MILLISECONDS.toMinutes(diffInMillis)
+                val hours = TimeUnit.MILLISECONDS.toHours(diffInMillis)
+                val days = TimeUnit.MILLISECONDS.toDays(diffInMillis)
+
+                when {
+                    seconds < 60 -> "Just now"
+                    minutes < 60 -> "$minutes min ago"
+                    hours < 24 -> "$hours hr ago"
+                    days < 7 -> "$days day ago"
+                    days < 30 -> "${days / 7} week ago"
+                    days < 365 -> "${days / 30} month ago"
+                    else -> "${days / 365} year ago"
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                ""
+            }
         }
 
         fun releasePlayer() {

@@ -3,6 +3,7 @@ package com.collage.empowermentstrishakti
 import android.Manifest
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -207,12 +208,25 @@ class CreatePostDialogFragment : DialogFragment() {
                     videoThumbnailUrl = videoThumbnailPart,
                     postImage = if (mediaParts.isNotEmpty()) mediaParts else null
                 )
-
                 if (response.isSuccessful && response.body()?.status == "Success") {
+
+                    Log.d("POST_FLOW", "Post upload success — opening home")
+
                     Toast.makeText(requireContext(), "Post uploaded successfully", Toast.LENGTH_SHORT).show()
-                    onPostCreatedListener?.onPostCreated() // ✅ notify activity
+
+                    // Open Home screen
+                   val intent = Intent(requireContext(), MainActivity::class.java)
+                   //intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+startActivity(intent)
+
+                    onPostCreatedListener?.onPostCreated()
+
                     dismiss()
                 }
+
+
+
+
                 else {
                     val errorMsg = response.errorBody()?.string() ?: response.message()
                     Toast.makeText(requireContext(), "Failed: $errorMsg", Toast.LENGTH_SHORT).show()
