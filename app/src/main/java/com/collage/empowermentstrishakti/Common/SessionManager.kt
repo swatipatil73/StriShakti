@@ -1,18 +1,46 @@
 package com.collage.empowermentstrishakti.Common
 
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
 class SessionManager(context: Context) {
 
-    private val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-    private val editor = sharedPreferences.edit()
+    private val sharedPreferences: SharedPreferences
 
-    // Save user data (keeps existing method)
+    init {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+
+        sharedPreferences = EncryptedSharedPreferences.create(
+            context,
+            "secure_user_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+
+    // Save user data
     fun saveUserData(userId: Int, userName: String, token: String) {
-        editor.putInt("user_id", userId)
-        editor.putString("user_name", userName)
-        editor.putString("token", token)
-        editor.apply()
+        sharedPreferences.edit().apply {
+            putInt("user_id", userId)
+            putString("user_name", userName)
+            putString("token", token)
+            apply()
+        }
+    }
+
+
+
+    fun saveRefreshToken(token: String) {
+        sharedPreferences.edit().putString("refresh_token", token).apply()
+    }
+
+    fun getRefreshToken(): String? {
+        return sharedPreferences.getString("refresh_token", null)
     }
 
     // Save boolean flags (fixed)
@@ -34,11 +62,33 @@ class SessionManager(context: Context) {
     }
 
     // Optional: convenience method to save UUID separately (do not conflict with existing callsites)
+
+
+
     fun saveUserUuid(uuid: String) {
-        editor.putString("user_uuid", uuid)
-        editor.apply()
+        sharedPreferences.edit().apply {
+            putString("user_uuid", uuid)
+            apply()
+        }
+    }
+    companion object {
+        private const val KEY_EXPIRY = "TOKEN_EXPIRY"
     }
 
+
+
+
+
+    fun saveTokenExpiry(expiry: String) {
+        sharedPreferences.edit().apply {
+            putString(KEY_EXPIRY, expiry)
+            apply()
+        }
+    }
+
+    fun getTokenExpiry(): String? {
+        return sharedPreferences.getString(KEY_EXPIRY, null)
+    }
     // Get user data
     fun getUserId(): Int {
         return sharedPreferences.getInt("user_id", -1)
@@ -56,23 +106,30 @@ class SessionManager(context: Context) {
         return sharedPreferences.getString("token", "")
     }
 
+
+
+
+
     // UUID getter — matches the name you used in activity (getuserUuid)
     fun getuserUuid(): String? {
         return sharedPreferences.getString("user_uuid", "")
     }
 
 
-
-    // optional helper to clear session (handy)
     fun clear() {
-        editor.clear().apply()
+        sharedPreferences.edit().apply {
+            clear()
+            apply()
+        }
     }
 
 
     fun saveUserRoles(isSwayamsiddha: Boolean, isAdiShakti: Boolean) {
-        editor.putBoolean("IS_SWAYAMSIDHA", isSwayamsiddha)
-        editor.putBoolean("IS_ADISHAKTI", isAdiShakti)
-        editor.commit() // <-- immediate save
+        sharedPreferences.edit().apply {
+            putBoolean("IS_SWAYAMSIDHA", isSwayamsiddha)
+            putBoolean("IS_ADISHAKTI", isAdiShakti)
+            apply()
+        }
     }
 
 

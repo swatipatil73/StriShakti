@@ -1,6 +1,7 @@
 package com.collage.empowermentstrishakti
 
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 
@@ -61,14 +62,17 @@ import android.content.Intent
 import android.content.IntentSender
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
+import com.collage.empowermentstrishakti.data.model.RefreshResponse
 import com.collage.empowermentstrishakti.data.model.post.PostData
+import com.collage.empowermentstrishakti.data.model.regi.LoginResponse
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
+import retrofit2.Call
 
 
 class MainActivity : BaseActivity() {
-
+    private var isSessionExpired = false
     private lateinit var progressBar: ProgressBar
     private lateinit var bottomProgressBar: ProgressBar   // ✅ Added
     private lateinit var emptyTextView: TextView
@@ -81,15 +85,15 @@ class MainActivity : BaseActivity() {
     private lateinit var apiService: ApiService
     private lateinit var token: String
     private var userId: Long = 0
+    private var sharedReelPlayer: ExoPlayer? = null
 
-    lateinit var sharedReelPlayer: ExoPlayer
     private lateinit var postActionsVM: PostActionsViewModel   // <— add this
     private var nextCursor: Long? = 0L
     private var hasNextPage = true
     private var isLoading = false
     private val pageSize = 5
-    private var pageSizeFirst = 2      // 👈 first page only 2
-    private val pageSizeNext  = 5      // 👈 later pages as before
+    private var pageSizeFirst = 10      // 👈 first page only 2
+    private var pageSizeNext  = 15      // 👈 later pages as before
     private val REQUEST_CODE_UPDATE = 100
     private val postCategory = "YOUR_POST_CATEGORY"
     // replace this
@@ -99,13 +103,103 @@ class MainActivity : BaseActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_main)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+
+            v.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                systemBars.bottom   // ✅ IMPORTANT FIX
+            )
             insets
         }
 
+
+
         sessionManager = SessionManager(this)
+
+// ✅ get saved values
+     //   val savedToken = sessionManager.getToken()
+        val savedToken = sessionManager.getToken()
+        val expiry = sessionManager.getTokenExpiry()
+      //  val expiry = "Apr 1, 2024, 4:59:15 PM"
+
+        Log.d("SESSION_DEBUG", "Token: $savedToken")
+        Log.d("SESSION_DEBUG", "Expiry: $expiry")
+
+
+
+        val refreshToken = sessionManager.getRefreshToken()
+        Log.d("SESSION_DEBUG", "Token: $refreshToken")
+        if (savedToken.isNullOrEmpty()) {
+
+            if (!refreshToken.isNullOrEmpty()) {
+
+                // 🔥 try auto login using refresh token
+                callRefreshToken(
+                    sessionManager,
+                    this,
+                    onSuccess = { newToken ->
+
+                        token = "Bearer $newToken"
+
+                        // continue app
+                        loadHomePosts()
+                    },
+                    onFailure = {
+
+                        // refresh also failed → login
+                      //  sessionManager.clearSession()
+                        startActivity(Intent(this, LoginActivity::class.java))
+                        finish()
+                    }
+                )
+
+            } else {
+                // ❌ no token + no refresh → login
+                startActivity(Intent(this, LoginActivity::class.java))
+                finish()
+            }
+
+            return
+        }
+
+// ✅ check login + expiry
+//        if (savedToken.isNullOrEmpty() || isTokenExpired(expiry)) {
+//
+//            isSessionExpired = true
+//
+//            AlertDialog.Builder(this)
+//
+//                .setTitle("😔 Session Expired")
+//                .setMessage("Your session has expired. Please login again.")
+//                .setCancelable(false)
+//                .setPositiveButton("OK") { _, _ ->
+//
+//                    sessionManager.clearSession()
+//
+//                    startActivity(Intent(this, LoginActivity::class.java))
+//                    finish()
+//                }
+//                .show()
+//
+//            return
+//        }
+        token = "Bearer $savedToken"
+
+        sharedReelPlayer = ExoPlayer.Builder(this).build().apply {
+            val audioAttr = AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                .build()
+
+            setAudioAttributes(audioAttr, true)
+            setHandleAudioBecomingNoisy(true)
+            playWhenReady = false
+            repeatMode = Player.REPEAT_MODE_ONE
+        }
         apiService = ApiClient.apiService
 
         setupToolbar(title = "Stri shakti", showSearch = false, showCreate = true)
@@ -116,7 +210,7 @@ class MainActivity : BaseActivity() {
             dialog.show(supportFragmentManager, "CreatePostDialog")
         }
 
-        checkForUpdate()
+       checkForUpdate()
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
         BottomNavigationHelper.setupBottomNavigation(this, bottomNavigationView, R.id.nav_home)
@@ -145,7 +239,7 @@ class MainActivity : BaseActivity() {
         observeDeleteEvents()
         lifecycleScope.launch {
             userId = sessionManager.getUserId().toLong()
-            token = "Bearer ${sessionManager.getToken()}"
+
 
 
             // Start loading posts immediately (non-blocking)
@@ -194,6 +288,27 @@ class MainActivity : BaseActivity() {
         }
     }
 
+
+    private fun isTokenExpired(expiryDate: String?): Boolean {
+
+        if (expiryDate.isNullOrEmpty()) return true
+
+        return try {
+            val format = java.text.SimpleDateFormat(
+                "MMM dd, yyyy, hh:mm:ss a",
+                java.util.Locale.ENGLISH
+            )
+
+            val expiry = format.parse(expiryDate)
+            val now = java.util.Date()
+
+            now.after(expiry)
+
+        } catch (e: Exception) {
+            true
+        }
+    }
+
     override fun onActivityResult(
         requestCode: Int,
         resultCode: Int,
@@ -214,7 +329,7 @@ class MainActivity : BaseActivity() {
     // ------------------------------------------------------------------------------------------
     // 🔹 RecyclerView setup
     private fun setupRecyclerView() {
-        adapter = HomeFeedAdapter(sharedReelPlayer, lifecycleScope,   postActionsVM
+        adapter = HomeFeedAdapter(sharedReelPlayer!!, lifecycleScope,   postActionsVM
         ) // <-- pass lifecycleScope
         progressBar = findViewById(R.id.progressBar)
         emptyTextView = findViewById(R.id.emptyTextView)
@@ -224,23 +339,21 @@ class MainActivity : BaseActivity() {
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)
         recyclerView.setItemViewCacheSize(10)
-
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-                val layoutManager = rv.layoutManager as LinearLayoutManager
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
 
-                val firstVisible = layoutManager.findFirstCompletelyVisibleItemPosition()
-
-                // If user reached top → refresh
-                if (firstVisible == 0 && !isLoading) {
-                    nextCursor = 0L
-                    hasNextPage = true
-                    loadHomePosts()
-                }
-
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val totalItemCount = layoutManager.itemCount
                 val lastVisible = layoutManager.findLastVisibleItemPosition()
 
-                if (lastVisible >= adapter.itemCount - 2 && !isLoading && hasNextPage) {
+                if (!isLoading && lastVisible >= totalItemCount - 1) {
+
+                    // 🔁 If last page reached → restart
+                    if (nextCursor == -1L) {
+                        nextCursor = 0L
+                    }
+
                     loadHomePosts()
                 }
             }
@@ -335,80 +448,115 @@ class MainActivity : BaseActivity() {
             }
         }
     }
-    private fun loadHomePosts() {
 
-        if (isLoading || !hasNextPage) return
+
+    // 🔹 Add these at class level (top of Activity)
+    private val handler = Handler(Looper.getMainLooper())
+    private var loadingToastShown = false
+    private var toastRunnable: Runnable? = null
+
+
+    private fun loadHomePosts() {
+        if (isSessionExpired) return
+        if (isLoading) return
         isLoading = true
 
+        // ⏳ Delay toast setup
+        loadingToastShown = false
+
+        toastRunnable = Runnable {
+            if (!loadingToastShown && isLoading) {
+                Toast.makeText(
+                    this,
+                    "Loading posts, please wait...",
+                    Toast.LENGTH_SHORT
+                ).show()
+                loadingToastShown = true
+            }
+        }
+
+        handler.postDelayed(toastRunnable!!, 1000)
+
         val isFirstPage = nextCursor == 0L
+
         if (isFirstPage) {
             progressBar.visibility = View.VISIBLE
             emptyTextView.visibility = View.GONE
         } else {
             Handler(Looper.getMainLooper()).post { adapter.showLoading() }
-            Log.d("POST_FLOW", "getHomePosts API called, cursor=$nextCursor")
+            Log.d("POST_FLOW", "API called, cursor=$nextCursor")
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+
                 val cursor = nextCursor ?: 0L
-                val size = if (isFirstPage) pageSizeFirst else pageSizeNext
+                val size = 4
 
-                val result = safeApiCall { apiService.getHomePosts(userId, cursor, size, token) }
-
-                result.onFailure { error ->
-                    withContext(Dispatchers.Main) {
-                        adapter.hideLoading()
-                        progressBar.visibility = View.GONE
-                        Toast.makeText(
-                            this@MainActivity,
-                            error.message ?: "Failed to load posts",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                    return@launch
+                val result = safeApiCall {
+                    apiService.getHomePosts(userId, cursor, size, token)
                 }
 
+                result.onFailure { error ->
+
+                    if (error.message?.contains("401") == true) {
+
+                        callRefreshToken(
+                            sessionManager,
+                            this@MainActivity,
+                            onSuccess = { newToken ->
+
+                                token = "Bearer $newToken"
+
+                                // 🔥 retry same API
+                                loadHomePosts()
+                            },
+                            onFailure = {
+
+                              //  sessionManager.clearSession()
+                                startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                                finish()
+                            }
+                        )
+
+                        return@onFailure   // 🔥 VERY IMPORTANT
+                    }
+
+                    Toast.makeText(
+                        this@MainActivity,
+                        error.message ?: "Error",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
                 val body = result.getOrNull()!!
                 val posts = body.postsData ?: emptyList()
-                nextCursor = body.nextCursor
-                hasNextPage = body.hasNextPage == true
+
+                // ✅ Pagination
+                if (body.hasNextPage == true) {
+                    nextCursor = body.nextCursor
+                } else {
+                    nextCursor = -1L   // 🔁 mark last page
+                }
 
                 withContext(Dispatchers.Main) {
 
                     val updated = if (cursor == 0L) {
+                        // First load OR restart
                         posts.map { HomeFeedItem.PostItem(it) }.toMutableList()
-
                     } else {
+                        // Append
                         val list = adapter.currentList.toMutableList()
                         list.removeAll { it is HomeFeedItem.LoadingItem }
                         list.addAll(posts.map { HomeFeedItem.PostItem(it) })
                         list
                     }
-                    adapter.submitList(updated)
+
+                    if (::adapter.isInitialized) {
+                        adapter.submitList(updated)
+                    }
                     progressBar.visibility = View.GONE
                     emptyTextView.visibility =
                         if (updated.isEmpty()) View.VISIBLE else View.GONE
-                }
-
-                // load reels for first page
-                if (cursor == 0L) {
-                    launch(Dispatchers.IO) {
-                        val reelsResult =
-                            safeApiCall { apiService.getAllReels(0, 5, token) }
-
-                        reelsResult.onSuccess { reelsResp ->
-                            val reels = reelsResp.postsData.orEmpty()
-                            if (reels.isNotEmpty()) {
-                                withContext(Dispatchers.Main) {
-                                    val list = adapter.currentList.toMutableList()
-                                    val insertIndex = if (list.size >= 5) 5 else list.size
-                                    list.add(insertIndex, HomeFeedItem.ReelSection(reels))
-                                    adapter.submitList(list)
-                                }
-                            }
-                        }
-                    }
                 }
 
             } catch (e: Exception) {
@@ -423,6 +571,9 @@ class MainActivity : BaseActivity() {
                 withContext(Dispatchers.Main) {
                     adapter.hideLoading()
                     isLoading = false
+
+                    // ❌ STOP delayed toast
+                    toastRunnable?.let { handler.removeCallbacks(it) }
                 }
             }
         }
@@ -430,82 +581,6 @@ class MainActivity : BaseActivity() {
 
 
 
-
-//
-//    private fun loadHomePosts() {
-//        if (isLoading || !hasNextPage) return
-//        isLoading = true
-//
-//        val isFirstPage = nextCursor == 0L
-//        if (isFirstPage) {
-//            progressBar.visibility = View.VISIBLE
-//            emptyTextView.visibility = View.GONE
-//        } else {
-//            Handler(Looper.getMainLooper()).post { adapter.showLoading() }
-//        }
-//
-//        lifecycleScope.launch(Dispatchers.IO) {
-//            try {
-//                val cursor = nextCursor ?: 0L
-//                val size = if (isFirstPage) pageSizeFirst else pageSizeNext
-//
-//                // ── 1) Posts with safeApiCall
-//                val result = safeApiCall { apiService.getHomePosts(userId, cursor, size, token) }
-//
-//                result.onFailure { error ->
-//                    withContext(Dispatchers.Main) {
-//                        adapter.hideLoading()
-//                        progressBar.visibility = View.GONE
-//                        Toast.makeText(this@MainActivity, error.message ?: "Failed to load posts", Toast.LENGTH_SHORT).show()
-//                    }
-//                    return@launch
-//                }
-//
-//                val body = result.getOrNull()!!
-//                val posts = body.postsData ?: emptyList()
-//                nextCursor = body.nextCursor
-//                hasNextPage = body.hasNextPage == true
-//
-//                // ── 2) FIRST: show posts immediately (UI thread)
-//                withContext(Dispatchers.Main) {
-//                    val updated = adapter.currentList.toMutableList()
-//                    updated.removeAll { it is HomeFeedItem.LoadingItem }
-//                    updated.addAll(posts.map { HomeFeedItem.PostItem(it) })
-//                    adapter.submitList(updated)
-//                    progressBar.visibility = View.GONE
-//                    emptyTextView.visibility = if (updated.isEmpty()) View.VISIBLE else View.GONE
-//                }
-//
-//                // ── 3) THEN: fetch reels asynchronously (only for first page)
-//                if (cursor == 0L) {
-//                    launch(Dispatchers.IO) {
-//                        val reelsResult = safeApiCall { apiService.getAllReels(0, 5, token) }
-//                        reelsResult.onSuccess { reelsResp ->
-//                            val reels = reelsResp.postsData.orEmpty()
-//                            if (reels.isNotEmpty()) {
-//                                withContext(Dispatchers.Main) {
-//                                    val list = adapter.currentList.toMutableList()
-//                                    val insertIndex = if (list.size >= 5) 5 else list.size
-//                                    list.add(insertIndex, HomeFeedItem.ReelSection(reels))
-//                                    adapter.submitList(list)
-//                                }
-//                            }
-//                        }
-//                        // onFailure: ignore silently; feed already visible
-//                    }
-//                }
-//            } catch (e: Exception) {
-//                withContext(Dispatchers.Main) {
-//                    Toast.makeText(this@MainActivity, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-//                }
-//            } finally {
-//                withContext(Dispatchers.Main) {
-//                    adapter.hideLoading()
-//                    isLoading = false
-//                }
-//            }
-//        }
-//    }
 
     // Call this from lifecycleScope.launch { val ok = loadAnnouncementAndAdsAndShowPopup() }
     private suspend fun loadAnnouncementAndAdsAndShowPopup(): Boolean {
@@ -642,14 +717,19 @@ class MainActivity : BaseActivity() {
     // 🔹 Lifecycle
     override fun onDestroy() {
         super.onDestroy()
-        sharedReelPlayer.release()
+
+        // 🔥 Stop all pending handlers (important)
+        if (isSessionExpired) {
+            handler.removeCallbacksAndMessages(null)
+        }
+
+        sharedReelPlayer?.release()
     }
 
     override fun onStop() {
         super.onStop()
-        sharedReelPlayer.pause()
+        sharedReelPlayer?.pause()
     }
-
     // ------------------------------------------------------------------------------------------
     // 🔹 Toolbar actions
     override fun onSearchClicked() {
@@ -674,8 +754,9 @@ class MainActivity : BaseActivity() {
 
         Log.d("POST_FLOW", "Force reload started")
 
-        nextCursor = 0L
+
         hasNextPage = true
+        nextCursor = nextCursor?.minus(1)
         isLoading = false
         firstPageHandled = false
 
@@ -689,8 +770,9 @@ class MainActivity : BaseActivity() {
 
 
     private fun refreshFeed() {
-        nextCursor = 0L
+
         hasNextPage = true
+        nextCursor = nextCursor?.minus(1)
         adapter.submitList(emptyList())
         progressBar.visibility = View.VISIBLE
         loadHomePosts()
@@ -702,11 +784,63 @@ class MainActivity : BaseActivity() {
         super.onResume()
 
         // Reset pagination to reload fresh data
-        nextCursor = 0L
+
         hasNextPage = true
+        nextCursor = nextCursor?.minus(1)
 
         loadHomePosts()
     }
+    fun callRefreshToken(
+        sessionManager: SessionManager,
+        context: Context,
+        onSuccess: (String) -> Unit,
+        onFailure: () -> Unit
+    ) {
 
+        val refreshToken = sessionManager.getRefreshToken()
+
+        val body = mapOf("refreshToken" to (refreshToken ?: ""))
+
+        ApiClient.apiService.refreshToken(body)
+            .enqueue(object : retrofit2.Callback<RefreshResponse> {
+
+                override fun onResponse(
+                    call: retrofit2.Call<RefreshResponse>,
+                    response: retrofit2.Response<RefreshResponse>
+                ) {
+
+                    val bodyRes = response.body()
+
+                    if (response.isSuccessful && bodyRes != null) {
+
+                        val newToken = bodyRes.token
+                        val newRefresh = bodyRes.refreshToken
+
+                        // ✅ Save new tokens
+                        sessionManager.saveUserData(
+                            sessionManager.getUserId(),
+                            sessionManager.getUserName() ?: "",
+                            newToken
+                        )
+
+                        sessionManager.saveRefreshToken(newRefresh)
+
+                        onSuccess(newToken)
+
+                    } else {
+                        onFailure()
+                    }
+                }
+
+                override fun onFailure(
+                    call: retrofit2.Call<RefreshResponse>,
+                    t: Throwable
+                ) {
+                    onFailure()
+                }
+            })
+    }
 
 }
+
+

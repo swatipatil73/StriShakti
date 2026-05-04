@@ -147,6 +147,13 @@ class LoginActivity:  AppCompatActivity() {
                     val userLastName = body.userLastName ?: ""
                     val userName = if (userFirstName.isNotBlank()) "$userFirstName $userLastName".trim() else (body.userFirstName ?: "")
                     val token = body.token ?: ""
+                   val expiry = body.tokenExpirationDate ?: ""
+
+                    val refreshToken = body.refreshToken ?: ""
+                    sessionManager.saveRefreshToken(refreshToken)
+                 //   val expiry = "Apr 1, 2024, 4:59:15 PM"   // past date
+                    Log.d("LOGIN_DEBUG", "Expiry from API: ${body.tokenExpirationDate}")
+                    Log.d("LOGIN_DEBUG", "Expiry from API: ${body.token}")
 
                     val uuid = body.userUUID
                     val isSwayamsiddha = body.isSwyamsiddha
@@ -155,25 +162,16 @@ class LoginActivity:  AppCompatActivity() {
                     Log.d("ssswwe1", "Mapped roles -> isSwyamsiddha=$isSwayamsiddha, isAdiShakti=$isAdiShakti")
 
 // Save to SharedPreferences
-                    sessionManager.saveUserUuid(uuid)
+
                     sessionManager.setIsSwayamsiddha(isSwayamsiddha)
                     sessionManager.setIsAdiShakti(isAdiShakti)
 
 // Log after saving
                     Log.d("ssswwe2", "Saved flags -> isSwayamsiddha=${sessionManager.isSwayamsiddha()}, isAdiShakti=${sessionManager.isAdiShakti()}")
 
-                    // Save in SharedPreferences (SessionManager)
-//                    sessionManager.saveUserData(
-//                        userId = userId,
-//                        userName = userName,
-//                        token = token
-//
-//
-//                    )
-
-
                     sessionManager.saveUserData(userId, userName, token)
 
+                    sessionManager.saveTokenExpiry(expiry)
                     sessionManager.saveUserUuid(uuid)
                     // Save UUID separately (you added this helper)
 

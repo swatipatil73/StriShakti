@@ -12,13 +12,10 @@ android {
         applicationId = "com.collage.empowermentstrishakti"
         minSdk = 26
         targetSdk = 36
-        versionCode = 35
+        versionCode = 39
 
 
-
-
-
-        versionName = "8.0"
+        versionName = "9.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -127,7 +124,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.github.bumptech.glide:glide:4.14.2")
 
-
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
 // optional for avatars
 }

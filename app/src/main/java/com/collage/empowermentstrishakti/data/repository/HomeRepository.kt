@@ -14,7 +14,7 @@ class HomeRepository(private val apiService: ApiService) {
         userId: Long,
         token: String,
         postCategory: String? = null,
-        postPageSize: Int = 2,
+        postPageSize: Int = 10,
         reelPageSize: Int = 5
     ): Result<HomeFeedResult> = withContext(Dispatchers.IO) {
         try {
@@ -96,7 +96,7 @@ class HomeRepository(private val apiService: ApiService) {
         userId: Long,
         token: String,
         cursor: Long,
-        postPageSize: Int = 5
+        postPageSize: Int = 10
     ): Result<HomePostPage> = withContext(Dispatchers.IO) {
         try {
             val postsResponse = apiService.getHomePosts(userId, cursor, postPageSize, token)

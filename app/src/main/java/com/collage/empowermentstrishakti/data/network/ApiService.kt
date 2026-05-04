@@ -27,6 +27,7 @@ import com.collage.empowermentstrishakti.data.model.Profile.UpdateUserResponse
 import com.collage.empowermentstrishakti.data.model.Profile.UserProfileResponse
 import com.collage.empowermentstrishakti.data.model.Reel.ReelResponse
 import com.collage.empowermentstrishakti.data.model.Reel.ReelUploadResponse
+import com.collage.empowermentstrishakti.data.model.RefreshResponse
 import com.collage.empowermentstrishakti.data.model.SavedPost.CreatePageRequest
 import com.collage.empowermentstrishakti.data.model.SavedPost.SavedPostResponse
 import com.collage.empowermentstrishakti.data.model.friend.FriendRequestResponse
@@ -138,6 +139,8 @@ interface ApiService {
     // 4) Home posts (paginated)
     // Example: /ssakti/users/home/home/v1/{userId}?cursor=0&size=5
     @GET("ssakti/users/home/home/v1/{userId}")
+
+
     suspend fun getHomePosts(
         @Path("userId") userId: Long,
         @Query("cursor") cursor: Long,
@@ -681,6 +684,13 @@ interface ApiService {
         @Query("page") page: Int,
         @Query("size") size: Int
     ): GroupChatHistoryResponse
+
+
+    @POST("ssakti/auth/refresh-token")
+
+    fun refreshToken(
+        @Body body: Map<String, String>
+    ): Call<RefreshResponse>
 
 }
 
